@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+        <meta name="referrer" content="no-referrer">
+
+        <title>WebCrypto</title>
+    </head>
+
+    <body>
+        Web Crypto API
+    </body>
+
+    <script async type="module">
+        function hashDigest(data){
+            return crypto.subtle.digest("SHA-512", data);
+        }
+
+        function keyGenerate(){
+            return crypto.subtle.generateKey({
+                name: "ECDH",
+                namedCurve: "P-521"
+            }, true, [
+                "deriveKey"
+            ]);
+        }
+
+        function keyImport(key){
+            return crypto.subtle.importKey({
+                158: "spki",
+                241: "pkcs8"
+            }[key.byteLength], key, {
+                name: "ECDH",
+                namedCurve: "P-521"
+            }, false, {
+                158: [],
+                241: ["deriveKey"]
+            }[key.byteLength]);
+        }
+
+        function keyExport(key){
+            return crypto.subtle.exportKey({
+                "public": "spki",
+                "private": "pkcs8"
+            }[key.type], key);
+        }
+
+        function keyDerive(pub, priv){
+            return crypto.subtle.deriveKey({
+                name: "ECDH",
+                public: pub
+            }, priv, {
+                name: "AES-GCM",
+                length: 256
+            }, false, [
+                "encrypt",
+                "decrypt"
+            ]);
+        }
+
+        async function aesEncrypt(key, data){
+            const iv = crypto.getRandomValues(new Uint8Array(16));
+            const result = await crypto.subtle.encrypt({
+                name: "AES-GCM",
+                tagLength: 128,
+                iv
+            }, key, data);
+
+            const output = new Uint8Array(iv.byteLength + result.byteLength);
+            output.set(iv, 0);
+            output.set(new Uint8Array(result), iv.byteLength);
+
+            return output.buffer;
+        }
+
+        function aesDecrypt(key, data){
+            return crypto.subtle.decrypt({
+                name: "AES-GCM",
+                iv: data.slice(0, 16),
+                tagLength: 128
+            }, key, data.slice(16));
+        }
+
+        const key1 = await keyGenerate();
+        const key2 = await keyGenerate();
+
+        const key1ExPub = await keyExport(key1.publicKey);
+        const key1ExPriv = await keyExport(key1.privateKey);
+        const key2ExPub = await keyExport(key2.publicKey);
+        const key2ExPriv = await keyExport(key2.privateKey);
+
+        console.log("--- Exported Keys ---");
+        for(const key of [key1ExPub, key1ExPriv, key2ExPub, key2ExPriv]){
+            console.log(key);
+        }
+
+        const key1ImPub = await keyImport(key1ExPub);
+        const key1ImPriv = await keyImport(key1ExPriv);
+        const key2ImPub = await keyImport(key2ExPub);
+        const key2ImPriv = await keyImport(key2ExPriv);
+
+        console.log("--- Imported Keys ---");
+        for(const key of [key1ImPub, key1ImPriv, key2ImPub, key2ImPriv]){
+            console.log(key);
+        }
+
+        const keyDe1Pub2Priv = await keyDerive(key1ImPub, key2ImPriv);
+        const keyDe2Pub1Priv = await keyDerive(key2ImPub, key1ImPriv);
+
+        console.log("--- Derived Keys ---");
+        for(const key of [keyDe1Pub2Priv, keyDe2Pub1Priv]){
+            console.log(key);
+        }
+
+        const raw = new TextEncoder().encode("hogehoge");
+
+        console.log("--- Raw Data ---");
+        console.log(new TextDecoder().decode(raw));
+        console.log(await hashDigest(raw));
+
+        const enc = await aesEncrypt(keyDe1Pub2Priv, raw);
+        const dec = await aesDecrypt(keyDe2Pub1Priv, enc);
+
+        console.log("--- Encoded Data ---");
+        console.log(new TextDecoder().decode(enc));
+
+        console.log("--- Decoded Data (Raw Data) ---");
+        console.log(new TextDecoder().decode(dec));
+        console.log(await hashDigest(dec));
+    </script>
+</html>
