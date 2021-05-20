@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+        <meta name="referrer" content="no-referrer">
+
+        <script>
+            if(/(trident|edge)\//i.test(navigator.userAgent)){
+                alert("お使いのウェブブラウザには対応していません。");
+                document.execCommand("stop");
+            }
+        </script>
+
+        <title>Public-Key Encrypt/Decrypt Tool</title>
+    </head>
+
+    <body>
+        <header>
+            <h1>PublicKey Encrypt/Decrypt Tool</h1>
+        </header>
+
+        <main>
+            <section>
+                <h3>暗号化/復号</h3>
+
+                <ul class="icon-file">
+                    <li>データ: <input type="file" accept=".zip,.bin" id="data"></li>
+                    <li>公開鍵: <input type="file" accept=".key" id="public"></li>
+                    <li>秘密鍵: <input type="file" accept=".key" id="private"></li>
+                </ul>
+
+                <p>
+                    <button disabled type="button" id="convert"></button>
+                    <button type="button" id="generate">&#x1F511; 鍵生成</button>
+                </p>
+            </section>
+
+            <section>
+                <h3>各種ドキュメント</h3>
+
+                <details>
+                    <summary>使用方法</summary>
+
+                    <p>
+                        暗号化が可能なデータは、ZIPアーカイブ <code>.zip</code> のみとなります。
+                        <br>
+                        送信したいデータは、予め通常のZIP圧縮(非暗号化)を行う必要があります。
+                    </p>
+
+                    <ol>
+                        <li>送信者と受信者は、それぞれ "鍵生成" ボタンを押し鍵ペアを生成する。</li>
+                        <li>鍵生成が完了すると、鍵ファイルがダウンロードされる。(ダウンロードの際に許可を求められる場合があります)</li>
+                        <ul>
+                            <li>公開鍵: <code>public.key</code></li>
+                            <li>秘密鍵: <code>private.key</code></li>
+                        </ul>
+                        <li>送信者と受信者は、公開鍵 <code>public.key</code> を電子メール等で相互に交換する。</li>
+                        <li>
+                            送信者は、ファイルを各フォームへ登録する。
+                            <ul>
+                                <li>暗号化したいデータ: "データ" フォーム (拡張子: <code>zip</code>)</li>
+                                <li>受信者から入手した公開鍵: "公開鍵" フォーム (ファイル名: <code>public.key</code>)</li>
+                                <li>自身で生成した秘密鍵: "秘密鍵" フォーム (ファイル名: <code>private.key</code>)</li>
+                            </ul>
+                        </li>
+                        <li> "暗号化" ボタンを押し、処理を開始する。</li>
+                        <li>処理が完了すると、暗号データ <code>cipher.bin</code> がダウンロードされるので、電子メール等で受信者へ伝送する。</li>
+                        <li>
+                            受信者は、ファイルを各フォームへ登録する。
+                            <ul>
+                                <li>暗号データ: "データ" フォーム (ファイル名: <code>cipher.bin</code>)</li>
+                                <li>送信者から入手した公開鍵: "公開鍵" フォーム (ファイル名: <code>public.key</code>)</li>
+                                <li>自身で生成した秘密鍵: "秘密鍵" フォーム (ファイル名: <code>private.key</code>)</li>
+                            </ul>
+                        </li>
+                        <li>"復号" ボタンを押し、処理を開始する。</li>
+                        <li>処理が完了すると、元データ <code>raw.zip</code> がダウンロードされるので、通常のZIP展開(非暗号化)を行う。</li>
+                    </ol>
+            </details>
+
+            <details>
+                <summary>技術仕様</summary>
+
+                <ul>
+                    <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">W3C Web Cryptography API</a></li>
+                    <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">楕円曲線ディフィーヘルマン鍵共有</a> (ECDH)</li>
+                    <li>公開鍵: <a href="https://ja.wikipedia.org/wiki/楕円曲線暗号" target="_blank" rel="noopener">楕円曲線暗号</a> NIST P-521</li>
+                    <li>暗号化: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> with 256bit Key, 128bit Tag, 128bit IV</li>
+                </ul>
+            </details>
+
+            <details>
+                <summary>安全性に関する記載</summary>
+
+                <p>
+                    アプリケーションの改竄検出を可能にするため、ハッシュ値を公開しています。
+                    <br>
+                    全ての処理がオフラインで完結するため、外部へデータを送信することは一切ありません。
+                    <br>
+                    外部のJavaScriptライブラリは一切使用していません。
+                    <br>
+                    MITライセンス準拠のオープンソースソフトウェアとなります。
+                </p>
+
+                <ul>
+                    <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
+                    <li>ソースコード: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
+                    <li>お問い合わせ: <a href="https://twitter.com/dojyorin" target="_blank" rel="noopener">Twitter</a></li>
+                </ul>
+            </details>
+            </section>
+        </main>
+    </body>
+
+    <script async type="module">
+        function getE(id){
+            return document.getElementById(id);
+        }
+
+        function keyGenerate(){
+            return crypto.subtle.generateKey({
+                name: "ECDH",
+                namedCurve: "P-521"
+            }, true, [
+                "deriveKey"
+            ]);
+        }
+
+        function keyImport(key){
+            return crypto.subtle.importKey({
+                158: "spki",
+                241: "pkcs8"
+            }[key.byteLength], key, {
+                name: "ECDH",
+                namedCurve: "P-521"
+            }, false, {
+                158: [],
+                241: ["deriveKey"]
+            }[key.byteLength]);
+        }
+
+        function keyExport(key){
+            return crypto.subtle.exportKey({
+                "public": "spki",
+                "private": "pkcs8"
+            }[key.type], key);
+        }
+
+        function keyDerive(publickey, privatekey){
+            return crypto.subtle.deriveKey({
+                name: "ECDH",
+                public: publickey
+            }, privatekey, {
+                name: "AES-GCM",
+                length: 256
+            }, false, [
+                "encrypt",
+                "decrypt"
+            ]);
+        }
+
+        async function aesEncrypt(key, data){
+            const iv = crypto.getRandomValues(new Uint8Array(16));
+            const result = await crypto.subtle.encrypt({
+                name: "AES-GCM",
+                tagLength: 128,
+                iv
+            }, key, data);
+
+            const output = new Uint8Array(iv.byteLength + result.byteLength);
+            output.set(iv, 0);
+            output.set(new Uint8Array(result), iv.byteLength);
+
+            return output.buffer;
+        }
+
+        function aesDecrypt(key, data){
+            return crypto.subtle.decrypt({
+                name: "AES-GCM",
+                iv: data.slice(0, 16),
+                tagLength: 128
+            }, key, data.slice(16));
+        }
+
+        function writeFile(data, name){
+            const link = document.createElement("a");
+
+            link.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+            link.download = name;
+            link.click();
+
+            URL.revokeObjectURL(link.href);
+        }
+
+        function openNotify(message){
+            const dialog = document.createElement("dialog");
+
+            dialog.style.position = "absolute";
+            dialog.style.top = "10px";
+            dialog.style.transition = "all 0.1s";
+            dialog.style.border = "0";
+            dialog.style.borderRadius = "8px";
+            dialog.style.padding = "10px 15px";
+            dialog.style.backgroundColor = "#CACACA";
+            dialog.style.boxShadow = "2px 3px 4px 0 #0000004D";
+
+            dialog.textContent = `\u{1F514} ${message}`;
+            dialog.show();
+
+            setTimeout(() => dialog.remove(), 5000);
+            document.body.appendChild(dialog);
+        }
+
+        function isExistFiles(){
+            getE("convert").disabled = ![getE("data"), getE("public"), getE("private")].every(({files}) => files.length);
+        }
+
+        function rawExtensionType(){
+            isExistFiles();
+
+            getE("convert").value = {
+                "zip": "encode",
+                "bin": "decode",
+                "": ""
+            }[getE("data").files[0]?.name?.split(/\./)?.pop() || ""];
+
+            getE("convert").textContent = "\u{1F510} " + {
+                "encode": "暗号化",
+                "decode": "復号",
+                "": "暗号化/復号"
+            }[getE("convert").value];
+        }
+
+        rawExtensionType();
+
+        getE("data").addEventListener("change", rawExtensionType);
+        getE("public").addEventListener("change", isExistFiles);
+        getE("private").addEventListener("change", isExistFiles);
+
+        getE("convert").addEventListener("click", async()=>{
+            try{
+                const key = await keyDerive(await keyImport(await getE("public").files[0].arrayBuffer()), await keyImport(await getE("private").files[0].arrayBuffer()));
+                const data = await getE("raw").files[0].arrayBuffer();
+
+                switch(getE("convert").value){
+                    case "encode":
+                        writeFile(await aesEncrypt(key, data), "cipher.bin");
+                    break;
+
+                    case "decode":
+                        writeFile(await aesDecrypt(key, data), "raw.zip");
+                    break;
+                }
+                openNotify("処理が完了しました");
+            }
+            catch{
+                alert("処理中にエラーが発生しました。\nページをリロードします。");
+                location.reload(true);
+            }
+        });
+
+        getE("generate").addEventListener("click", async()=>{
+            const {publicKey, privateKey} = await keyGenerate();
+
+            writeFile(await keyExport(publicKey), "public.key");
+            writeFile(await keyExport(privateKey), "private.key");
+
+            openNotify("処理が完了しました");
+        });
+    </script>
+
+    <style>
+        ::-webkit-scrollbar{
+            display: none !important;
+        }
+        body{
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        main{
+            margin: 0 10px;
+        }
+        h1{
+            margin: 20px;
+        }
+        h3{
+            margin: 10px;
+        }
+        button{
+            font-size: 16px;
+            padding: 2px 8px;
+        }
+        ol, ul, li{
+            margin: 5px 0;
+        }
+        details{
+            user-select: none;
+            margin: 10px 0;
+        }
+        details > p{
+            margin: 10px 20px;
+        }
+        .icon-file{
+            list-style-type: "\1F4C2";
+        }
+    </style>
+</html>
