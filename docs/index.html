@@ -6,38 +6,49 @@
         <meta name="referrer" content="no-referrer">
 
         <script>
-            if(/(trident|edge)\//i.test(navigator.userAgent)){
-                alert("お使いのウェブブラウザには対応していません。");
+            if(!crypto.subtle){
+                alert("ご使用のウェブブラウザは対応していません");
                 document.execCommand("stop");
             }
         </script>
 
-        <title>Public-Key Encrypt/Decrypt Tool</title>
+        <title>公開鍵暗号化ツール</title>
     </head>
 
     <body>
         <header>
-            <h1>PublicKey Encrypt/Decrypt Tool</h1>
+            <h1>公開鍵暗号化ツール</h1>
         </header>
 
         <main>
             <section>
                 <h3>暗号化/復号</h3>
 
-                <ul class="icon-file">
-                    <li>データ: <input type="file" accept=".zip,.bin" id="data"></li>
-                    <li>公開鍵: <input type="file" accept=".key" id="public"></li>
-                    <li>秘密鍵: <input type="file" accept=".key" id="private"></li>
+                <ul class="input">
+                    <li>
+                        <div>データ</div>
+                        <input type="file" accept=".zip,.bin" id="data">
+                    </li>
+
+                    <li>
+                        <div>公開鍵</div>
+                        <input type="file" accept=".key" id="public">
+                    </li>
+
+                    <li>
+                        <div>秘密鍵</div>
+                        <input type="file" accept=".key" id="private">
+                    </li>
                 </ul>
 
                 <p>
-                    <button disabled type="button" id="convert"></button>
+                    <button type="button" id="convert">&#x1F510; 暗号化/復号</button>
                     <button type="button" id="generate">&#x1F511; 鍵生成</button>
                 </p>
             </section>
 
             <section>
-                <h3>各種ドキュメント</h3>
+                <h3>ドキュメント</h3>
 
                 <details>
                     <summary>使用方法</summary>
@@ -50,65 +61,71 @@
 
                     <ol>
                         <li>送信者と受信者は、それぞれ "鍵生成" ボタンを押し鍵ペアを生成する。</li>
-                        <li>鍵生成が完了すると、鍵ファイルがダウンロードされる。(ダウンロードの際に許可を求められる場合があります)</li>
+                        <li>鍵生成が完了すると、2個のファイルがダウンロードされる。(ダウンロードの際に許可を求められる場合があります)</li>
                         <ul>
-                            <li>公開鍵: <code>public.key</code></li>
-                            <li>秘密鍵: <code>private.key</code></li>
+                            <li><code>public.key</code></li>
+                            <li><code>private.key</code></li>
                         </ul>
-                        <li>送信者と受信者は、公開鍵 <code>public.key</code> を電子メール等で相互に交換する。</li>
+                        <li>送信者と受信者は、それぞれ生成した <code>public.key</code> を電子メール等で相互に交換する。</li>
                         <li>
-                            送信者は、ファイルを各フォームへ登録する。
+                            送信者は、当ツールの各フォームへファイルを入力する。
                             <ul>
-                                <li>暗号化したいデータ: "データ" フォーム (拡張子: <code>zip</code>)</li>
-                                <li>受信者から入手した公開鍵: "公開鍵" フォーム (ファイル名: <code>public.key</code>)</li>
-                                <li>自身で生成した秘密鍵: "秘密鍵" フォーム (ファイル名: <code>private.key</code>)</li>
+                                <li>暗号化したい <code>.zip</code>: "データ" フォーム</li>
+                                <li>受信者から入手した <code>public.key</code>: "公開鍵" フォーム</li>
+                                <li>自身で生成した <code>private.key</code>: "秘密鍵" フォーム</li>
                             </ul>
                         </li>
-                        <li> "暗号化" ボタンを押し、処理を開始する。</li>
-                        <li>処理が完了すると、暗号データ <code>cipher.bin</code> がダウンロードされるので、電子メール等で受信者へ伝送する。</li>
+                        <li>"暗号化" ボタンを押し、処理を開始する。</li>
+                        <li>処理が完了すると、1個のファイルがダウンロードされるので、電子メール等で受信者へ伝送する。</li>
+                        <ul>
+                            <li><code>cipher.bin</code></li>
+                        </ul>
                         <li>
-                            受信者は、ファイルを各フォームへ登録する。
+                            受信者は、当ツールの各フォームへファイルを入力する。
                             <ul>
-                                <li>暗号データ: "データ" フォーム (ファイル名: <code>cipher.bin</code>)</li>
-                                <li>送信者から入手した公開鍵: "公開鍵" フォーム (ファイル名: <code>public.key</code>)</li>
-                                <li>自身で生成した秘密鍵: "秘密鍵" フォーム (ファイル名: <code>private.key</code>)</li>
+                                <li>送信者から入手した <code>cipher.bin</code>: "データ" フォーム</li>
+                                <li>送信者から入手した <code>public.key</code>: "公開鍵" フォーム</li>
+                                <li>自身で生成した <code>private.key</code>: "秘密鍵" フォーム</li>
                             </ul>
                         </li>
                         <li>"復号" ボタンを押し、処理を開始する。</li>
-                        <li>処理が完了すると、元データ <code>raw.zip</code> がダウンロードされるので、通常のZIP展開(非暗号化)を行う。</li>
+                        <li>処理が完了すると、1個のファイルがダウンロードされるので、通常のZIP展開(非暗号化)を行う。</li>
+                        <ul>
+                            <li><code>raw.zip</code></li>
+                        </ul>
                     </ol>
-            </details>
+                </details>
 
-            <details>
-                <summary>技術仕様</summary>
+                <details>
+                    <summary>技術仕様</summary>
 
-                <ul>
-                    <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">W3C Web Cryptography API</a></li>
-                    <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">楕円曲線ディフィーヘルマン鍵共有</a> (ECDH)</li>
-                    <li>公開鍵: <a href="https://ja.wikipedia.org/wiki/楕円曲線暗号" target="_blank" rel="noopener">楕円曲線暗号</a> NIST P-521</li>
-                    <li>暗号化: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> with 256bit Key, 128bit Tag, 128bit IV</li>
-                </ul>
-            </details>
+                    <ul>
+                        <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">W3C Web Cryptography API</a></li>
+                        <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">楕円曲線ディフィーヘルマン鍵共有</a> (ECDH)</li>
+                        <li>公開鍵: <a href="https://ja.wikipedia.org/wiki/楕円曲線暗号" target="_blank" rel="noopener">楕円曲線暗号</a> NIST P-521</li>
+                        <li>暗号化: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> with 256bit Key, 128bit Tag, 128bit IV</li>
+                    </ul>
+                </details>
 
-            <details>
-                <summary>安全性に関する記載</summary>
+                <details>
+                    <summary>安全性に関する記載</summary>
 
-                <p>
-                    アプリケーションの改竄検出を可能にするため、ハッシュ値を公開しています。
-                    <br>
-                    全ての処理がオフラインで完結するため、外部へデータを送信することは一切ありません。
-                    <br>
-                    外部のJavaScriptライブラリは一切使用していません。
-                    <br>
-                    MITライセンス準拠のオープンソースソフトウェアとなります。
-                </p>
+                    <p>
+                        アプリケーションの改竄検出を可能にするため、ハッシュ値を公開しています。
+                        <br>
+                        全ての処理がオフラインで完結するため、外部へデータを送信することは一切ありません。
+                        <br>
+                        外部のJavaScriptライブラリは一切使用していません。
+                        <br>
+                        MITライセンス準拠のオープンソースソフトウェアとなります。
+                    </p>
 
-                <ul>
-                    <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
-                    <li>ソースコード: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
-                    <li>お問い合わせ: <a href="https://twitter.com/dojyorin" target="_blank" rel="noopener">Twitter</a></li>
-                </ul>
-            </details>
+                    <ul>
+                        <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
+                        <li>ソースコード: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
+                        <li>お問い合わせ: <a href="https://twitter.com/dojyorin" target="_blank" rel="noopener">Twitter</a></li>
+                    </ul>
+                </details>
             </section>
         </main>
     </body>
@@ -212,59 +229,56 @@
             document.body.appendChild(dialog);
         }
 
-        function isExistFiles(){
-            getE("convert").disabled = ![getE("data"), getE("public"), getE("private")].every(({files}) => files.length);
-        }
-
-        function rawExtensionType(){
-            isExistFiles();
-
-            getE("convert").value = {
-                "zip": "encode",
-                "bin": "decode",
-                "": ""
-            }[getE("data").files[0]?.name?.split(/\./)?.pop() || ""];
-
-            getE("convert").textContent = "\u{1F510} " + {
-                "encode": "暗号化",
-                "decode": "復号",
-                "": "暗号化/復号"
-            }[getE("convert").value];
-        }
-
-        rawExtensionType();
-
-        getE("data").addEventListener("change", rawExtensionType);
-        getE("public").addEventListener("change", isExistFiles);
-        getE("private").addEventListener("change", isExistFiles);
-
         getE("convert").addEventListener("click", async()=>{
-            try{
-                const key = await keyDerive(await keyImport(await getE("public").files[0].arrayBuffer()), await keyImport(await getE("private").files[0].arrayBuffer()));
-                const data = await getE("raw").files[0].arrayBuffer();
+            function ab(id){
+                return getE(id).files[0].arrayBuffer();
+            }
 
-                switch(getE("convert").value){
-                    case "encode":
+            if(["data", "public", "private"].some(e => getE(e).files.length !== 1)){
+                openNotify("ファイルを選択してください");
+                return;
+            }
+
+            try{
+                const key = await keyDerive(await keyImport(await ab("public")), await keyImport(await ab("private")));
+                const data = await ab("data");
+
+                switch(getE("data").files[0].name.split(/\./).pop()){
+                    case "zip":
                         writeFile(await aesEncrypt(key, data), "cipher.bin");
                     break;
 
-                    case "decode":
+                    case "bin":
                         writeFile(await aesDecrypt(key, data), "raw.zip");
                     break;
                 }
-                openNotify("処理が完了しました");
             }
             catch{
-                alert("処理中にエラーが発生しました。\nページをリロードします。");
-                location.reload(true);
+                openNotify("処理中にエラーが発生しました");
+                return;
             }
+
+            openNotify("処理が完了しました");
         });
 
         getE("generate").addEventListener("click", async()=>{
-            const {publicKey, privateKey} = await keyGenerate();
+            function pz(n){
+                return n.toString().padStart(2, "0");
+            }
 
-            writeFile(await keyExport(publicKey), "public.key");
-            writeFile(await keyExport(privateKey), "private.key");
+            const d = new Date();
+            const ts = `${d.getFullYear()}${pz(d.getMonth() + 1)}${pz(d.getDate())}_${pz(d.getHours())}${pz(d.getMinutes())}${pz(d.getSeconds())}`;
+
+            try{
+                const {publicKey, privateKey} = await keyGenerate();
+
+                writeFile(await keyExport(publicKey), `public-${ts}.key`);
+                writeFile(await keyExport(privateKey), `private-${ts}.key`);
+            }
+            catch{
+                openNotify("処理中にエラーが発生しました");
+                return;
+            }
 
             openNotify("処理が完了しました");
         });
@@ -285,24 +299,34 @@
             margin: 20px;
         }
         h3{
+            margin: 30px 0 0 0;
+        }
+        p{
             margin: 10px;
         }
+        details{
+            margin: 10px;
+        }
+        input, button{
+            box-sizing: border-box;
+        }
+        input{
+            margin-top: 6px;
+        }
         button{
-            font-size: 16px;
+            font-size: 14px;
             padding: 2px 8px;
         }
-        ol, ul, li{
-            margin: 5px 0;
-        }
-        details{
-            user-select: none;
-            margin: 10px 0;
-        }
-        details > p{
-            margin: 10px 20px;
-        }
-        .icon-file{
+        ul.input{
             list-style-type: "\1F4C2";
+            margin: 10px 0 20px 30px;
+            padding: 0;
+        }
+        ul.input > li{
+            margin-bottom: 20px;
+        }
+        ul.input > li:last-of-type{
+            margin-bottom: unset;
         }
     </style>
 </html>
