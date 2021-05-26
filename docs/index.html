@@ -6,7 +6,7 @@
         <meta name="referrer" content="no-referrer">
 
         <script>
-            if(!crypto.subtle){
+            if(/(trident|edge)\//i.test(navigator.userAgent)){
                 alert("ご使用のウェブブラウザは対応していません");
                 document.execCommand("stop");
             }
@@ -75,7 +75,7 @@
                                 <li>自身で生成した <code>private.key</code>: "秘密鍵" フォーム</li>
                             </ul>
                         </li>
-                        <li>"暗号化" ボタンを押し、処理を開始する。</li>
+                        <li>"暗号化/復号" ボタンを押し、処理を開始する。</li>
                         <li>処理が完了すると、1個のファイルがダウンロードされるので、電子メール等で受信者へ伝送する。</li>
                         <ul>
                             <li><code>cipher.bin</code></li>
@@ -88,7 +88,7 @@
                                 <li>自身で生成した <code>private.key</code>: "秘密鍵" フォーム</li>
                             </ul>
                         </li>
-                        <li>"復号" ボタンを押し、処理を開始する。</li>
+                        <li>"暗号化/復号" ボタンを押し、処理を開始する。</li>
                         <li>処理が完了すると、1個のファイルがダウンロードされるので、通常のZIP展開(非暗号化)を行う。</li>
                         <ul>
                             <li><code>raw.zip</code></li>
@@ -108,7 +108,7 @@
                 </details>
 
                 <details>
-                    <summary>安全性に関する記載</summary>
+                    <summary>安全性</summary>
 
                     <p>
                         アプリケーションの改竄検出を可能にするため、ハッシュ値を公開しています。
@@ -122,7 +122,7 @@
 
                     <ul>
                         <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
-                        <li>ソースコード: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
+                        <li>リポジトリ: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
                         <li>お問い合わせ: <a href="https://twitter.com/dojyorin" target="_blank" rel="noopener">Twitter</a></li>
                     </ul>
                 </details>
