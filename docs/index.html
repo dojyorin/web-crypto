@@ -100,10 +100,10 @@
                     <summary>技術仕様</summary>
 
                     <ul>
-                        <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">W3C Web Cryptography API</a></li>
-                        <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">楕円曲線ディフィーヘルマン鍵共有</a> (ECDH)</li>
-                        <li>公開鍵: <a href="https://ja.wikipedia.org/wiki/楕円曲線暗号" target="_blank" rel="noopener">楕円曲線暗号</a> NIST P-521</li>
-                        <li>暗号化: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> with 256bit Key, 128bit Tag, 128bit IV</li>
+                        <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
+                        <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">楕円曲線ディフィーヘルマン鍵共有</a></li>
+                        <li>公開鍵暗号: <a href="https://ja.wikipedia.org/wiki/楕円曲線暗号" target="_blank" rel="noopener">楕円曲線暗号</a> - NIST P-521</li>
+                        <li>共通鍵暗号: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 128bit IV</li>
                     </ul>
                 </details>
 
@@ -113,9 +113,9 @@
                     <p>
                         アプリケーションの改竄検出を可能にするため、ハッシュ値を公開しています。
                         <br>
-                        全ての処理がオフラインで完結するため、外部へデータを送信することは一切ありません。
+                        全ての処理がオフラインで完結するため、データを外部へ送信することはありません。
                         <br>
-                        外部のJavaScriptライブラリは一切使用していません。
+                        サードパーティのJavaScriptライブラリは使用していません。
                         <br>
                         MITライセンス準拠のオープンソースソフトウェアとなります。
                     </p>
@@ -262,12 +262,7 @@
         });
 
         getE("generate").addEventListener("click", async()=>{
-            function pz(n){
-                return n.toString().padStart(2, "0");
-            }
-
-            const d = new Date();
-            const ts = `${d.getFullYear()}${pz(d.getMonth() + 1)}${pz(d.getDate())}_${pz(d.getHours())}${pz(d.getMinutes())}${pz(d.getSeconds())}`;
+            const ts = new Date().getTime().toString();
 
             try{
                 const {publicKey, privateKey} = await keyGenerate();
@@ -292,14 +287,17 @@
             margin: 0 !important;
             padding: 0 !important;
         }
+        header{
+            margin: 20px;
+        }
         main{
             margin: 0 10px;
         }
-        h1{
-            margin: 20px;
+        h1, h3{
+            margin: 0;
         }
-        h3{
-            margin: 30px 0 0 0;
+        section{
+            margin-top: 20px;
         }
         p{
             margin: 10px;
@@ -323,7 +321,7 @@
             padding: 0;
         }
         ul.input > li{
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         ul.input > li:last-of-type{
             margin-bottom: unset;
