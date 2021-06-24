@@ -131,12 +131,8 @@
     </body>
 
     <script async type="module">
-        function $el(id){
+        function $id(id){
             return document.getElementById(id);
-        }
-
-        function $ab(id){
-            return $el(id).files[0].arrayBuffer();
         }
 
         function concatBuffer(...arrays){
@@ -258,8 +254,8 @@
             document.body.appendChild(dialog);
         }
 
-        $el("convert").addEventListener("click", async()=>{
-            if(["data", "public", "private"].some(e => $el(e).files.length !== 1)){
+        $id("convert").addEventListener("click", async()=>{
+            if(["data", "public", "private"].some(e => $id(e).files.length !== 1)){
                 openNotify("ファイルを選択してください");
                 return;
             }
@@ -272,11 +268,11 @@
             }
 
             try{
-                const {pub, sec} = await importKey(await $ab("public"), await $ab("private"), pw);
+                const {pub, sec} = await importKey(await $id("public").files[0].arrayBuffer(), await $id("private").files[0].arrayBuffer(), pw);
                 const com = await deriveKey(pub, sec);
-                const data = await $ab("data");
+                const data = await $id("data").files[0].arrayBuffer();
 
-                switch($el("data").files[0].name.split(/\./).pop().toLowerCase()){
+                switch($id("data").files[0].name.split(/\./).pop().toLowerCase()){
                     case "zip":
                         writeFile(await encryptData(com, data), "cipher.bin");
                     break;
@@ -298,7 +294,7 @@
             openNotify("処理が完了しました");
         });
 
-        $el("generate").addEventListener("click", async()=>{
+        $id("generate").addEventListener("click", async()=>{
             const pw = prompt("秘密鍵に設定するパスワードを入力してください");
 
             if(!pw){
