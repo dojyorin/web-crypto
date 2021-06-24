@@ -37,7 +37,7 @@
 
                     <li>
                         <div>秘密鍵</div>
-                        <input type="file" accept=".key" id="private">
+                        <input type="file" accept=".key" id="secret">
                     </li>
                 </ul>
 
@@ -64,7 +64,7 @@
                         <li>鍵生成が完了すると、2個のファイルがダウンロードされる。(ダウンロードの際に許可を求められる場合があります)</li>
                         <ul>
                             <li><code>public.key</code></li>
-                            <li><code>private.key</code></li>
+                            <li><code>secret.key</code></li>
                         </ul>
                         <li>送信者と受信者は、それぞれ生成した <code>public.key</code> を電子メール等で相互に交換する。</li>
                         <li>
@@ -72,7 +72,7 @@
                             <ul>
                                 <li>暗号化したい <code>.zip</code>: "データ" フォーム</li>
                                 <li>受信者から入手した <code>public.key</code>: "公開鍵" フォーム</li>
-                                <li>自身で生成した <code>private.key</code>: "秘密鍵" フォーム</li>
+                                <li>自身で生成した <code>secret.key</code>: "秘密鍵" フォーム</li>
                             </ul>
                         </li>
                         <li>"暗号化/復号" ボタンを押し、処理を開始する。</li>
@@ -85,7 +85,7 @@
                             <ul>
                                 <li>送信者から入手した <code>cipher.bin</code>: "データ" フォーム</li>
                                 <li>送信者から入手した <code>public.key</code>: "公開鍵" フォーム</li>
-                                <li>自身で生成した <code>private.key</code>: "秘密鍵" フォーム</li>
+                                <li>自身で生成した <code>secret.key</code>: "秘密鍵" フォーム</li>
                             </ul>
                         </li>
                         <li>"暗号化/復号" ボタンを押し、処理を開始する。</li>
@@ -255,7 +255,7 @@
         }
 
         $id("convert").addEventListener("click", async()=>{
-            if(["data", "public", "private"].some(e => $id(e).files.length !== 1)){
+            if(["data", "public", "secret"].some(e => $id(e).files.length !== 1)){
                 openNotify("ファイルを選択してください");
                 return;
             }
@@ -268,7 +268,7 @@
             }
 
             try{
-                const {pub, sec} = await importKey(await $id("public").files[0].arrayBuffer(), await $id("private").files[0].arrayBuffer(), pw);
+                const {pub, sec} = await importKey(await $id("public").files[0].arrayBuffer(), await $id("secret").files[0].arrayBuffer(), pw);
                 const com = await deriveKey(pub, sec);
                 const data = await $id("data").files[0].arrayBuffer();
 
