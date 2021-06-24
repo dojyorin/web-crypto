@@ -131,79 +131,108 @@
     </body>
 
     <script async type="module">
-        function getE(id){
+        function $el(id){
             return document.getElementById(id);
         }
 
-        function keyGenerate(){
-            return crypto.subtle.generateKey({
+        function $ab(id){
+            return $el(id).files[0].arrayBuffer();
+        }
+
+        function concatBuffer(...arrays){
+            return arrays.reduce((c, array)=>{
+                c.byte.set(new Uint8Array(array?.buffer ?? array), c.offset);
+                c.offset += array.byteLength;
+                return c;
+            }, {
+                byte: new Uint8Array(arrays.reduce((c, {byteLength}) => c += byteLength, 0)),
+                offset: 0
+            }).byte.buffer;
+        }
+
+        function CONFIG_PBKDF2(v){
+            return {
+                name: "PBKDF2",
+                hash: "SHA-512",
+                iterations: 0xFFFF,
+                salt: v
+            };
+        }
+
+        function CONFIG_CURVE(){
+            return {
                 name: "ECDH",
                 namedCurve: "P-521"
-            }, true, [
-                "deriveKey"
-            ]);
+            };
         }
 
-        function keyImport(key){
-            return crypto.subtle.importKey({
-                158: "spki",
-                241: "pkcs8"
-            }[key.byteLength], key, {
+        function CONFIG_ECDH(v){
+            return {
                 name: "ECDH",
-                namedCurve: "P-521"
-            }, false, {
-                158: [],
-                241: ["deriveKey"]
-            }[key.byteLength]);
+                public: v
+            };
         }
 
-        function keyExport(key){
-            return crypto.subtle.exportKey({
-                "public": "spki",
-                "private": "pkcs8"
-            }[key.type], key);
-        }
-
-        function keyDerive(publickey, privatekey){
-            return crypto.subtle.deriveKey({
-                name: "ECDH",
-                public: publickey
-            }, privatekey, {
+        function CONFIG_AES(){
+            return {
                 name: "AES-GCM",
                 length: 256
-            }, false, [
-                "encrypt",
-                "decrypt"
-            ]);
+            };
         }
 
-        async function aesEncrypt(key, data){
-            const iv = crypto.getRandomValues(new Uint8Array(16));
-            const result = await crypto.subtle.encrypt({
+        function CONFIG_GCM(v){
+            return {
                 name: "AES-GCM",
                 tagLength: 128,
-                iv
-            }, key, data);
-
-            const output = new Uint8Array(iv.byteLength + result.byteLength);
-            output.set(iv, 0);
-            output.set(new Uint8Array(result), iv.byteLength);
-
-            return output.buffer;
+                iv: v
+            };
         }
 
-        function aesDecrypt(key, data){
-            return crypto.subtle.decrypt({
-                name: "AES-GCM",
-                iv: data.slice(0, 16),
-                tagLength: 128
-            }, key, data.slice(16));
+        async function createPassword(pw, salt){
+            return crypto.subtle.deriveKey(CONFIG_PBKDF2(salt), await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]), CONFIG_AES(), false, ["wrapKey", "unwrapKey"]);
+        }
+
+        function hashDigest(data){
+            return crypto.subtle.digest("SHA-512", data);
+        }
+
+        async function exportKey(pw){
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+
+            const {publicKey, privateKey} = await crypto.subtle.generateKey(CONFIG_CURVE(), true, ["deriveKey"]);
+
+            return {
+                pub: await crypto.subtle.exportKey("spki", publicKey),
+                sec: concatBuffer(iv, salt, await crypto.subtle.wrapKey("pkcs8", privateKey, await createPassword(pw, salt), CONFIG_GCM(iv)))
+            };
+        }
+
+        async function importKey(pub, sec, pw){
+            return {
+                pub: await crypto.subtle.importKey("spki", pub, CONFIG_CURVE(), false, []),
+                sec: await crypto.subtle.unwrapKey("pkcs8", sec.slice(28), await createPassword(pw, sec.slice(12, 28)), CONFIG_GCM(sec.slice(0, 12)), CONFIG_CURVE(), false, ["deriveKey"])
+            };
+        }
+
+        function deriveKey(pub, sec){
+            return crypto.subtle.deriveKey(CONFIG_ECDH(pub), sec, CONFIG_AES(), false, ["encrypt", "decrypt"]);
+        }
+
+        async function encryptData(com, data){
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+
+            return concatBuffer(iv, await crypto.subtle.encrypt(CONFIG_GCM(iv), com, data));
+        }
+
+        function decryptData(com, data){
+            return crypto.subtle.decrypt(CONFIG_GCM(data.slice(0, 12)), com, data.slice(12));
         }
 
         function writeFile(data, name){
             const link = document.createElement("a");
 
-            link.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+            link.href = URL.createObjectURL(new Blob([data]));
             link.download = name;
             link.click();
 
@@ -229,27 +258,35 @@
             document.body.appendChild(dialog);
         }
 
-        getE("convert").addEventListener("click", async()=>{
-            function ab(id){
-                return getE(id).files[0].arrayBuffer();
-            }
-
-            if(["data", "public", "private"].some(e => getE(e).files.length !== 1)){
+        $el("convert").addEventListener("click", async()=>{
+            if(["data", "public", "private"].some(e => $el(e).files.length !== 1)){
                 openNotify("ファイルを選択してください");
                 return;
             }
 
-            try{
-                const key = await keyDerive(await keyImport(await ab("public")), await keyImport(await ab("private")));
-                const data = await ab("data");
+            const pw = prompt("秘密鍵に設定されているパスワードを入力してください");
 
-                switch(getE("data").files[0].name.split(/\./).pop()){
+            if(!pw){
+                openNotify("処理をキャンセルしました");
+                return;
+            }
+
+            try{
+                const {pub, sec} = await importKey(await $ab("public"), await $ab("private"), pw);
+                const com = await deriveKey(pub, sec);
+                const data = await $ab("data");
+
+                switch($el("data").files[0].name.split(/\./).pop().toLowerCase()){
                     case "zip":
-                        writeFile(await aesEncrypt(key, data), "cipher.bin");
+                        writeFile(await encryptData(com, data), "cipher.bin");
                     break;
 
                     case "bin":
-                        writeFile(await aesDecrypt(key, data), "raw.zip");
+                        writeFile(await decryptData(com, data), "raw.zip");
+                    break;
+
+                    default:
+                        throw "Unsupported extension.";
                     break;
                 }
             }
@@ -261,14 +298,21 @@
             openNotify("処理が完了しました");
         });
 
-        getE("generate").addEventListener("click", async()=>{
-            const ts = new Date().getTime().toString();
+        $el("generate").addEventListener("click", async()=>{
+            const pw = prompt("秘密鍵に設定するパスワードを入力してください");
+
+            if(!pw){
+                openNotify("処理をキャンセルしました");
+                return;
+            }
+
+            const id = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(n => n.toString(16)).join("");
 
             try{
-                const {publicKey, privateKey} = await keyGenerate();
+                const {pub, sec} = await exportKey();
 
-                writeFile(await keyExport(publicKey), `public-${ts}.key`);
-                writeFile(await keyExport(privateKey), `private-${ts}.key`);
+                writeFile(pub, `public-${id}.key`);
+                writeFile(sec, `secret-${id}.key`);
             }
             catch{
                 openNotify("処理中にエラーが発生しました");
