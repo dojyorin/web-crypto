@@ -120,24 +120,16 @@
                         <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
                         <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">楕円曲線ディフィーヘルマン鍵共有</a></li>
                         <li>公開鍵暗号: <a href="https://ja.wikipedia.org/wiki/楕円曲線暗号" target="_blank" rel="noopener">楕円曲線暗号</a> - NIST P-521</li>
-                        <li>共通鍵暗号: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 128bit IV</li>
+                        <li>共通鍵暗号: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 96bit IV</li>
                     </ul>
                 </details>
 
                 <details>
                     <summary>[安全性]</summary>
-
-                    <p>
-                        アプリケーションの改竄検出を可能にするため、ハッシュ値を公開しています。
-                        <br>
-                        全ての処理がオフラインで完結するため、データを外部へ送信することはありません。
-                        <br>
-                        サードパーティのJavaScriptライブラリは使用していません。
-                        <br>
-                        MITライセンス準拠のオープンソースソフトウェアとなります。
-                    </p>
-
                     <ul>
+                        <li>全ての処理がクライアントの内部で完結するため、データを外部へ送信することはありません。</li>
+                        <li>サードパーティ製のライブラリは使用していません。</li>
+                        <li>MITライセンス準拠のオープンソースソフトウェアとなります。</li>
                         <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
                         <li>リポジトリ: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
                         <li>お問い合わせ: <a href="https://twitter.com/dojyorin" target="_blank" rel="noopener">Twitter</a></li>
