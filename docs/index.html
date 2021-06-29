@@ -22,7 +22,7 @@
 
         <main>
             <section>
-                <h3>暗号化/復号</h3>
+                <h2>暗号化/復号</h2>
 
                 <ul class="input">
                     <li>
@@ -48,56 +48,73 @@
             </section>
 
             <section>
-                <h3>ドキュメント</h3>
+                <h2>ドキュメント</h2>
 
                 <details>
-                    <summary>使用方法</summary>
+                    <summary>[使用方法]</summary>
 
-                    <p>
-                        暗号化が可能なデータは、ZIPアーカイブ <code>.zip</code> のみとなります。
-                        <br>
-                        送信したいデータは、予め通常のZIP圧縮(非暗号化)を行う必要があります。
-                    </p>
+                    <h3>はじめに</h3>
+                    <ul>
+                        <li>暗号化が可能なデータは、ZIPアーカイブ(拡張子: <code>zip</code>) のみとなります。</li>
+                        <li>送信したいデータは、あらかじめ ZIP圧縮(非暗号化) を行う必要があります。</li>
+                    </ul>
 
+                    <h3>STEP1: 鍵を生成する (操作: 送信者/受信者)</h3>
                     <ol>
-                        <li>送信者と受信者は、それぞれ "鍵生成" ボタンを押し鍵ペアを生成する。</li>
-                        <li>鍵生成が完了すると、2個のファイルがダウンロードされる。(ダウンロードの際に許可を求められる場合があります)</li>
+                        <li>送信者と受信者は、それぞれ <a href="#generate">鍵生成</a> ボタンを押し、処理を開始します。</li>
+                        <li>秘密鍵を保護するためのパスワード設定を求められるので、推測されにくい値を入力します。</li>
+                        <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
                         <ul>
-                            <li><code>public.key</code></li>
-                            <li><code>secret.key</code></li>
+                            <li><code>public-{乱数}.key</code> : 公開鍵(公開しても問題ない)</li>
+                            <li><code>secret-{乱数}.key</code> : 秘密鍵(絶対に公開してはいけない)</li>
                         </ul>
-                        <li>送信者と受信者は、それぞれ生成した <code>public.key</code> を電子メール等で相互に交換する。</li>
-                        <li>
-                            送信者は、当ツールの各フォームへファイルを入力する。
-                            <ul>
-                                <li>暗号化したい <code>.zip</code>: "データ" フォーム</li>
-                                <li>受信者から入手した <code>public.key</code>: "公開鍵" フォーム</li>
-                                <li>自身で生成した <code>secret.key</code>: "秘密鍵" フォーム</li>
-                            </ul>
-                        </li>
-                        <li>"暗号化/復号" ボタンを押し、処理を開始する。</li>
-                        <li>処理が完了すると、1個のファイルがダウンロードされるので、電子メール等で受信者へ伝送する。</li>
+                    </ol>
+
+                    <h3>STEP2: 公開鍵を交換する (操作: 送信者/受信者)</h3>
+                    <ol>
+                        <li>送信者と受信者は、それぞれ生成した <code>public.key</code> を、電子メールなどで相互に交換します。</li>
+                    </ol>
+
+                    <h3>STEP3: 暗号化を行う (操作: 送信者)</h3>
+                    <ol>
+                        <li>送信者は、ツールの各フォームへファイルを入力します。</li>
                         <ul>
-                            <li><code>cipher.bin</code></li>
+                            <li><a href="#data">データ</a> フォーム : 暗号化したい ZIPアーカイブ</li>
+                            <li><a href="#public">公開鍵</a> フォーム : 受信者から受け取った <code>public.key</code></li>
+                            <li><a href="#secret">秘密鍵</a> フォーム : 自身で生成した <code>secret.key</code></li>
                         </ul>
-                        <li>
-                            受信者は、当ツールの各フォームへファイルを入力する。
-                            <ul>
-                                <li>送信者から入手した <code>cipher.bin</code>: "データ" フォーム</li>
-                                <li>送信者から入手した <code>public.key</code>: "公開鍵" フォーム</li>
-                                <li>自身で生成した <code>secret.key</code>: "秘密鍵" フォーム</li>
-                            </ul>
-                        </li>
-                        <li>"暗号化/復号" ボタンを押し、処理を開始する。</li>
-                        <li>処理が完了すると、1個のファイルがダウンロードされるので、通常のZIP展開(非暗号化)を行う。</li>
+                        <li><a href="#convert">暗号化/復号</a> ボタンを押し、処理を開始します。</li>
+                        <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
+                        <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
                         <ul>
-                            <li><code>raw.zip</code></li>
+                            <li><code>cipher.bin</code> : 暗号データ(公開しても問題ない)</li>
+                        </ul>
+                    </ol>
+
+                    <h3>STEP4: 暗号データを送信する (操作: 送信者)</h3>
+                    <ol>
+                        <li>送信者は、暗号化された <code>cipher.bin</code> を、電子メールなどで受信者へ渡します。</li>
+                    </ol>
+
+                    <h3>STEP5: 暗号データを復号する (操作: 受信者)</h3>
+                    <ol>
+                        <li>受信者は、ツールの各フォームへファイルを入力します。</li>
+                        <ul>
+                            <li><a href="#data">データ</a> フォーム : 送信者から受け取った <code>cipher.bin</code></li>
+                            <li><a href="#public">公開鍵</a> フォーム : 送信者から受け取った <code>public.key</code></li>
+                            <li><a href="#secret">秘密鍵</a> フォーム : 自身で生成した <code>secret.key</code></li>
+                        </ul>
+                        <li><a href="#convert">暗号化/復号</a> ボタンを押し、処理を開始します。</li>
+                        <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
+                        <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
+                        <ul>
+                            <li><code>raw.zip</code> : 元データ(通常のZIPアーカイブ)</li>
                         </ul>
                     </ol>
                 </details>
 
                 <details>
-                    <summary>技術仕様</summary>
+                    <summary>[技術仕様]</summary>
 
                     <ul>
                         <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
@@ -108,7 +125,7 @@
                 </details>
 
                 <details>
-                    <summary>安全性</summary>
+                    <summary>[安全性]</summary>
 
                     <p>
                         アプリケーションの改竄検出を可能にするため、ハッシュ値を公開しています。
@@ -284,13 +301,12 @@
                         throw "Unsupported extension.";
                     break;
                 }
+
+                openNotify("処理が完了しました");
             }
             catch{
                 openNotify("処理中にエラーが発生しました");
-                return;
             }
-
-            openNotify("処理が完了しました");
         });
 
         $id("generate").addEventListener("click", async()=>{
@@ -308,13 +324,12 @@
 
                 writeFile(pub, `public-${id}.key`);
                 writeFile(sec, `secret-${id}.key`);
+
+                openNotify("処理が完了しました");
             }
             catch{
                 openNotify("処理中にエラーが発生しました");
-                return;
             }
-
-            openNotify("処理が完了しました");
         });
     </script>
 
@@ -332,8 +347,11 @@
         main{
             margin: 0 10px;
         }
-        h1, h3{
+        h1, h2, h3{
             margin: 0;
+        }
+        h3{
+            margin-top: 16px;
         }
         section{
             margin-top: 20px;
@@ -353,6 +371,9 @@
         button{
             font-size: 14px;
             padding: 2px 8px;
+        }
+        ul, ol{
+            margin: 0;
         }
         ul.input{
             list-style-type: "\1F4C2";
