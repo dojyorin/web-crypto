@@ -51,7 +51,7 @@
                 <h2>ドキュメント</h2>
 
                 <details>
-                    <summary>[使用方法]</summary>
+                    <summary>使用方法</summary>
 
                     <h3>はじめに</h3>
                     <ul>
@@ -114,20 +114,20 @@
                 </details>
 
                 <details>
-                    <summary>[技術仕様]</summary>
+                    <summary>技術仕様</summary>
 
                     <ul>
                         <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
-                        <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">楕円曲線ディフィーヘルマン鍵共有</a></li>
-                        <li>公開鍵暗号: <a href="https://ja.wikipedia.org/wiki/楕円曲線暗号" target="_blank" rel="noopener">楕円曲線暗号</a> - NIST P-521</li>
-                        <li>共通鍵暗号: <a href="https://ja.wikipedia.org/wiki/Galois%2FCounter_Mode" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 96bit IV</li>
+                        <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">ECDH</a></li>
+                        <li>公開鍵: <a href="https://datatracker.ietf.org/doc/html/rfc4492" target="_blank" rel="noopener">NIST P-521</a> - 521bit Key</li>
+                        <li>共通鍵: <a href="https://ja.wikipedia.org/wiki/Advanced_Encryption_Standard" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 96bit IV</li>
                     </ul>
                 </details>
 
                 <details>
-                    <summary>[安全性]</summary>
+                    <summary>安全性</summary>
                     <ul>
-                        <li>全ての処理がクライアントの内部で完結するため、データを外部へ送信することはありません。</li>
+                        <li>すべてのデータ処理はローカルで完結するため、インターネットへ送信されることはありません。</li>
                         <li>サードパーティ製のライブラリは使用していません。</li>
                         <li>MITライセンス準拠のオープンソースソフトウェアとなります。</li>
                         <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
@@ -330,6 +330,7 @@
             display: none !important;
         }
         body{
+            user-select: none !important;
             margin: 0 !important;
             padding: 0 !important;
         }
@@ -354,7 +355,12 @@
         details{
             margin: 10px;
         }
+        summary{
+            cursor: pointer;
+            list-style-type: "\1F4D6";
+        }
         input, button{
+            cursor: pointer;
             box-sizing: border-box;
         }
         input{
