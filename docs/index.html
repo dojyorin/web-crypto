@@ -32,12 +32,12 @@
 
                     <li>
                         <div>公開鍵</div>
-                        <input type="file" accept=".key" id="public">
+                        <input type="file" accept=".pub" id="public">
                     </li>
 
                     <li>
                         <div>秘密鍵</div>
-                        <input type="file" accept=".key" id="secret">
+                        <input type="file" accept=".sec" id="secret">
                     </li>
                 </ul>
 
@@ -65,8 +65,8 @@
                         <li>秘密鍵を保護するためのパスワード設定を求められるので、推測されにくい値を入力します。</li>
                         <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
                         <ul>
-                            <li><code>public-{乱数}.key</code> : 公開鍵(公開しても問題ない)</li>
-                            <li><code>secret-{乱数}.key</code> : 秘密鍵(絶対に公開してはいけない)</li>
+                            <li><code>key-{乱数}.pub</code> : 公開鍵(公開しても問題ない)</li>
+                            <li><code>key-{乱数}.sec</code> : 秘密鍵(絶対に公開してはいけない)</li>
                         </ul>
                     </ol>
 
@@ -120,7 +120,7 @@
                         <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
                         <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">ECDH</a></li>
                         <li>公開鍵: <a href="https://datatracker.ietf.org/doc/html/rfc4492" target="_blank" rel="noopener">NIST P-521</a> - 521bit Key</li>
-                        <li>共通鍵: <a href="https://ja.wikipedia.org/wiki/Advanced_Encryption_Standard" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 96bit IV</li>
+                        <li>共通鍵: <a href="https://ja.wikipedia.org/wiki/Advanced_Encryption_Standard" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 128bit IV (96bit Nonce + 32bit Counter)</li>
                     </ul>
                 </details>
 
@@ -310,8 +310,8 @@
             try{
                 const {pub, sec} = await exportKey(pw);
 
-                writeFile(pub, `public-${id}.key`);
-                writeFile(sec, `secret-${id}.key`);
+                writeFile(pub, `key-${id}.pub`);
+                writeFile(sec, `key-${id}.sec`);
 
                 openNotify("処理が完了しました");
             }
