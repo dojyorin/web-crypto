@@ -155,7 +155,7 @@
             }).byte.buffer;
         }
 
-        function $writeFile(name, data){
+        function $fsWrite(name, data){
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([data]));
             link.download = name;
@@ -163,24 +163,6 @@
             link.click();
 
             URL.revokeObjectURL(link.href);
-        }
-
-        function $openNotify(message){
-            const dialog = document.createElement("dialog");
-            dialog.style.position = "fixed";
-            dialog.style.top = "10px";
-            dialog.style.transition = "all 0.1s";
-            dialog.style.border = "0";
-            dialog.style.borderRadius = "8px";
-            dialog.style.padding = "10px 15px";
-            dialog.style.backgroundColor = "#CACACA";
-            dialog.style.boxShadow = "2px 3px 4px 0 #0000004D";
-            dialog.textContent = `\u{1F514} ${message}`;
-
-            dialog.show();
-
-            setTimeout(() => dialog.remove(), 5000);
-            document.body.appendChild(dialog);
         }
 
         function wcConfigPBKDF2(v){
@@ -265,14 +247,14 @@
 
         $id("convert").addEventListener("click", async()=>{
             if(["data", "public", "secret"].some(e => $id(e).files.length !== 1)){
-                $openNotify("ファイルを選択してください");
+                alert("ファイルを選択してください");
                 return;
             }
 
             const pw = prompt("秘密鍵に設定されているパスワードを入力してください");
 
             if(!pw){
-                $openNotify("処理をキャンセルしました");
+                alert("処理をキャンセルしました");
                 return;
             }
 
@@ -283,22 +265,20 @@
 
                 switch($id("data").files[0].name.split(/\./).pop().toLowerCase()){
                     case "zip":
-                        $writeFile("cipher.bin", await wcEncryptData(com, data));
+                        $fsWrite("cipher.bin", await wcEncryptData(com, data));
                     break;
 
                     case "bin":
-                        $writeFile("restore.zip", await wcDecryptData(com, data));
+                        $fsWrite("restore.zip", await wcDecryptData(com, data));
                     break;
 
                     default:
                         throw "Unsupported extension.";
                     break;
                 }
-
-                $openNotify("処理が完了しました");
             }
             catch{
-                $openNotify("処理中にエラーが発生しました");
+                alert("処理中にエラーが発生しました");
             }
         });
 
@@ -306,7 +286,7 @@
             const pw = prompt("秘密鍵に設定するパスワードを入力してください");
 
             if(!pw){
-                $openNotify("処理をキャンセルしました");
+                alert("処理をキャンセルしました");
                 return;
             }
 
@@ -315,13 +295,11 @@
             try{
                 const {pub, sec} = await wcExportKey(pw);
 
-                $writeFile(`key-${id}.pub`, pub);
-                $writeFile(`key-${id}.sec`, sec);
-
-                $openNotify("処理が完了しました");
+                $fsWrite(`key-${id}.pub`, pub);
+                $fsWrite(`key-${id}.sec`, sec);
             }
             catch{
-                $openNotify("処理中にエラーが発生しました");
+                alert("処理中にエラーが発生しました");
             }
         });
     </script>
