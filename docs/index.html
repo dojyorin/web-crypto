@@ -6,8 +6,8 @@
         <meta name="referrer" content="no-referrer">
 
         <script>
-            if(!window.SubtleCrypto){
-                alert("ご使用のウェブブラウザは非対応です");
+            if(!window.SubtleCrypto || !window.HTMLDialogElement || !window.CompressionStream){
+                alert("ご使用のウェブブラウザは非対応です。\nChromeまたはEdgeをお使いください。");
                 stop();
             }
         </script>
@@ -27,7 +27,7 @@
                 <ul class="input">
                     <li>
                         <div>データ</div>
-                        <input type="file" accept=".zip,.bin" id="data">
+                        <input multiple type="file" id="data">
                     </li>
 
                     <li>
@@ -42,7 +42,8 @@
                 </ul>
 
                 <p>
-                    <button type="button" id="convert">&#x1F510; 暗号化/復号</button>
+                    <button type="button" id="encode">&#x1F512; 暗号化</button>
+                    <button type="button" id="decode">&#x1F513; 復号</button>
                     <button type="button" id="generate">&#x1F511; 鍵生成</button>
                 </p>
             </section>
@@ -52,12 +53,6 @@
 
                 <details>
                     <summary>使用方法</summary>
-
-                    <h3>はじめに</h3>
-                    <ul>
-                        <li>暗号化が可能なデータは、ZIPアーカイブ(拡張子: <code>zip</code>) のみとなります。</li>
-                        <li>送信したいデータは、あらかじめ ZIP圧縮(非暗号化) を行う必要があります。</li>
-                    </ul>
 
                     <h3>STEP1: 鍵を生成する (操作: 送信者/受信者)</h3>
                     <ol>
@@ -79,7 +74,7 @@
                     <ol>
                         <li>送信者は、ツールの各フォームへファイルを入力します。</li>
                         <ul>
-                            <li><a href="#data">データ</a> フォーム : 暗号化したい ZIPアーカイブ</li>
+                            <li><a href="#data">データ</a> フォーム : 暗号化したいファイル (複数指定可能)</li>
                             <li><a href="#public">公開鍵</a> フォーム : 受信者から受け取った <code>key-{乱数}.pub</code></li>
                             <li><a href="#secret">秘密鍵</a> フォーム : 自身で生成した <code>key-{乱数}.sec</code></li>
                         </ul>
@@ -106,10 +101,7 @@
                         </ul>
                         <li><a href="#convert">暗号化/復号</a> ボタンを押し、処理を開始します。</li>
                         <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
-                        <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
-                        <ul>
-                            <li><code>restore.zip</code> : 元データ(通常のZIPアーカイブ)</li>
-                        </ul>
+                        <li>処理が完了すると、元のファイルがダウンロードされます。</li>
                     </ol>
                 </details>
 
@@ -144,15 +136,34 @@
             return document.getElementById(id);
         }
 
+        function dvSet(n, w){
+            const dv = new DataView(new ArrayBuffer(w));
+            dv[`setUint${w * 8}`](0, n);
+            return dv.buffer;
+        }
+
+        function dvGet(b, w){
+            return new DataView(b)[`getUint${w * 8}`](0);
+        }
+
+        async function fileEntry(files){
+            return Promise.all(Array.from(files).map(async f => ({name: f.name, data: await f.arrayBuffer()})));
+        }
+
         function bufferJoin(...sources){
-            return sources.reduce((sum, source)=>{
-                sum.byte.set(new Uint8Array(source?.buffer ?? source), sum.offset);
-                sum.offset += source.byteLength;
-                return sum;
-            }, {
-                byte: new Uint8Array(sources.reduce((sum, {byteLength}) => sum += byteLength, 0)),
-                offset: 0
-            }).byte.buffer;
+            const data = new Uint8Array(sources.reduce((a, {byteLength}) => a += byteLength, 0));
+            let offset = 0;
+
+            for(const source of sources){
+                data.set(new Uint8Array(source?.buffer ?? source), offset);
+                offset += source.byteLength;
+            }
+
+            return data.buffer;
+        }
+
+        function toHex(data){
+            return Array.from(new Uint8Array(data?.buffer ?? data)).map(n => n.toString(16).padStart(2, "0").toUpperCase()).join("");
         }
 
         function fsWrite(name, data){
@@ -181,6 +192,20 @@
 
             setTimeout(() => dialog.remove(), 5000);
             document.body.appendChild(dialog);
+        }
+
+        function packConfigMeta(){
+            return {
+                count: 2
+            };
+        }
+
+        function packConfigHeader(){
+            return {
+                size: 4,
+                hash: 64,
+                name: 256
+            };
         }
 
         function wcConfigPBKDF2(v){
@@ -219,6 +244,60 @@
                 tagLength: 128,
                 iv: v
             };
+        }
+
+        async function deflateEncode(data){
+            return new Response(new Blob([data]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer();
+        }
+
+        async function deflateDecode(data){
+            return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate"))).arrayBuffer();
+        }
+
+        async function packEncode(files){
+            if(files.length > ((0x100 ** packConfigMeta().count) - 1) || files.some(({name, data: {byteLength}}) => (byteLength > ((0x100 ** packConfigHeader().size) - 1)) || (name.length > packConfigHeader().name))){
+                throw "";
+            }
+
+            const archive = new Uint8Array(packConfigMeta().count + (Object.values(packConfigHeader()).reduce((a, b) => a + b, 0) * files.length) + files.reduce((a, {data: {byteLength}}) => a + byteLength, 0));
+
+            archive.set(new Uint8Array(dvSet(files.length, packConfigMeta().count)), 0);
+
+            for(let i = 0, offset = packConfigMeta().count; i < files.length; i++){
+                const {name, data} = files.at(i);
+
+                archive.set(new Uint8Array(dvSet(data.byteLength, packConfigHeader().size)), offset);
+                archive.set(new Uint8Array(await wcHashDigest(data)), offset += packConfigHeader().size);
+                archive.set(new TextEncoder().encode(name), offset += packConfigHeader().hash);
+                archive.set(new Uint8Array(data), offset += packConfigHeader().name);
+
+                offset += data.byteLength;
+            }
+
+            return archive.buffer;
+        }
+
+        async function packDecode(archive){
+            const files = [];
+
+            for(let i = 0, offset = packConfigMeta().count; i < dvGet(archive.slice(0, packConfigMeta().count), packConfigMeta().count); i++){
+                const size = dvGet(archive.slice(offset, offset += packConfigHeader().size), packConfigHeader().size);
+                const hash = toHex(archive.slice(offset, offset += packConfigHeader().hash));
+                const name = new TextDecoder().decode(archive.slice(offset, offset += packConfigHeader().name)).replace(/\0+$/, "");
+                const data = archive.slice(offset, offset += size);
+
+                if(hash !== toHex(await wcHashDigest(data))){
+                    throw "";
+                }
+
+                files.push({name, data});
+            }
+
+            return files;
+        }
+
+        async function wcHashDigest(data){
+            return crypto.subtle.digest("SHA-512", data);
         }
 
         async function wcDerivePassword(pw, salt){
@@ -263,8 +342,8 @@
             return crypto.subtle.decrypt(wcConfigGCM(vdata.subarray(0, 12)), com, vdata.subarray(12));
         }
 
-        $id("convert").addEventListener("click", async()=>{
-            if(["data", "public", "secret"].some(e => $id(e).files.length !== 1)){
+        $id("encode").addEventListener("click", async()=>{
+            if(!$id("data").files.length || $id("public").files.length !== 1 || $id("secret").files.length !== 1){
                 dialogNotify("ファイルを選択してください");
                 return;
             }
@@ -279,20 +358,37 @@
             dialogNotify("処理を開始しました");
 
             try{
-                const {pub, sec} = await wcImportKey(await $id("public").files[0].arrayBuffer(), await $id("secret").files[0].arrayBuffer(), pw);
-                const com = await wcDeriveKey(pub, sec);
-                const data = await $id("data").files[0].arrayBuffer();
+                const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
 
-                switch($id("data").files[0].name.split(/\./).pop().toLowerCase()){
-                    case "zip": {
-                        fsWrite("cipher.bin", await wcEncryptData(com, data));
-                        break;
-                    }
+                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await deflateEncode(await packEncode(await fileEntry($id("data").files)))));
 
-                    case "bin": {
-                        fsWrite("restore.zip", await wcDecryptData(com, data));
-                        break;
-                    }
+                dialogNotify("処理が完了しました");
+            }
+            catch{
+                dialogNotify("処理中にエラーが発生しました");
+            }
+        });
+
+        $id("decode").addEventListener("click", async()=>{
+            if($id("data").files.length !== 1 || $id("public").files.length !== 1 || $id("secret").files.length !== 1){
+                dialogNotify("ファイルを選択してください");
+                return;
+            }
+
+            const pw = prompt("秘密鍵に設定されているパスワード");
+
+            if(!pw){
+                dialogNotify("パスワードを入力してください");
+                return;
+            }
+
+            dialogNotify("処理を開始しました");
+
+            try{
+                const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
+
+                for(const {name, data} of await packDecode(await deflateDecode(await wcDecryptData(await wcDeriveKey(pub, sec), await $id("data").files.item(0).arrayBuffer())))){
+                    fsWrite(name, data);
                 }
 
                 dialogNotify("処理が完了しました");
@@ -314,7 +410,7 @@
 
             try{
                 const {pub, sec} = await wcExportKey(pw);
-                const id = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(n => n.toString(16)).join("");
+                const id = toHex(crypto.getRandomValues(new Uint8Array(4)));
 
                 fsWrite(`key-${id}.pub`, pub);
                 fsWrite(`key-${id}.sec`, sec);
