@@ -60,8 +60,8 @@
                         <li>秘密鍵を保護するためのパスワード設定を求められるので、推測されにくい値を入力します。</li>
                         <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
                         <ul>
-                            <li><code>key-{乱数}.pub</code> : 公開鍵(公開しても問題ない)</li>
-                            <li><code>key-{乱数}.sec</code> : 秘密鍵(絶対に公開してはいけない)</li>
+                            <li><code>key-{乱数}.pub</code> : 公開鍵 (公開しても問題ない)</li>
+                            <li><code>key-{乱数}.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
                         </ul>
                     </ol>
 
@@ -74,15 +74,15 @@
                     <ol>
                         <li>送信者は、ツールの各フォームへファイルを入力します。</li>
                         <ul>
-                            <li><a href="#data">データ</a> フォーム : 暗号化したいファイル (複数指定可能)</li>
-                            <li><a href="#public">公開鍵</a> フォーム : 受信者から受け取った <code>key-{乱数}.pub</code></li>
-                            <li><a href="#secret">秘密鍵</a> フォーム : 自身で生成した <code>key-{乱数}.sec</code></li>
+                            <li><a href="#data">データ</a> : 暗号化したいファイル (複数指定可能)</li>
+                            <li><a href="#public">公開鍵</a> : <code>key-{乱数}.pub</code> (受信者から受け取ったもの)</li>
+                            <li><a href="#secret">秘密鍵</a> : <code>key-{乱数}.sec</code> (自身で生成したもの)</li>
                         </ul>
-                        <li><a href="#convert">暗号化/復号</a> ボタンを押し、処理を開始します。</li>
+                        <li><a href="#encode">暗号化</a> ボタンを押し、処理を開始します。</li>
                         <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
                         <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
                         <ul>
-                            <li><code>cipher.bin</code> : 暗号データ(公開しても問題ない)</li>
+                            <li><code>cipher.bin</code> : 暗号データ (公開しても問題ない)</li>
                         </ul>
                     </ol>
 
@@ -95,11 +95,11 @@
                     <ol>
                         <li>受信者は、ツールの各フォームへファイルを入力します。</li>
                         <ul>
-                            <li><a href="#data">データ</a> フォーム : 送信者から受け取った <code>cipher.bin</code></li>
-                            <li><a href="#public">公開鍵</a> フォーム : 送信者から受け取った <code>key-{乱数}.pub</code></li>
-                            <li><a href="#secret">秘密鍵</a> フォーム : 自身で生成した <code>key-{乱数}.sec</code></li>
+                            <li><a href="#data">データ</a> : <code>cipher.bin</code> (送信者から受け取ったもの)</li>
+                            <li><a href="#public">公開鍵</a> : <code>key-{乱数}.pub</code> (送信者から受け取ったもの)</li>
+                            <li><a href="#secret">秘密鍵</a> : <code>key-{乱数}.sec</code> (自身で生成したもの)</li>
                         </ul>
-                        <li><a href="#convert">暗号化/復号</a> ボタンを押し、処理を開始します。</li>
+                        <li><a href="#decode">復号</a> ボタンを押し、処理を開始します。</li>
                         <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
                         <li>処理が完了すると、元のファイルがダウンロードされます。</li>
                     </ol>
@@ -152,7 +152,17 @@
             const dv1 = new DataView(source1?.buffer ?? source1);
             const dv2 = new DataView(source2?.buffer ?? source2);
 
-            return dv1.byteLength !== dv2.byteLength || new Array(dv1.byteLength).fill(null).every((_, i) => dv1.getUint8(i) === dv2.getUint8(i));
+            if(dv1.byteLength !== dv2.byteLength){
+                return false;
+            }
+
+            for(let i = 0; i < dv1.byteLength; i++){
+                if(dv1.getUint8(i) !== dv2.getUint8(i)){
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         function dvSetQuad(n){
