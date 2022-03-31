@@ -6,8 +6,8 @@
         <meta name="referrer" content="no-referrer">
 
         <script>
-            if(!window.SubtleCrypto || !window.HTMLDialogElement || !window.CompressionStream){
-                alert("ご使用のウェブブラウザは非対応です。\nChromeまたはEdgeをお使いください。");
+            if(!globalThis.SubtleCrypto || !globalThis.HTMLDialogElement || !globalThis.CompressionStream){
+                alert("ご使用のウェブブラウザは非対応です。\nChromeまたはEdgeをご使用ください。");
                 stop();
             }
         </script>
@@ -177,7 +177,7 @@
         }
 
         function toHex(data){
-            return Array.from(new Uint8Array(data?.buffer ?? data)).map(n => n.toString(16).padStart(2, "0").toUpperCase()).join("");
+            return [...new Uint8Array(data?.buffer ?? data)].map(n => n.toString(16).padStart(2, "0").toUpperCase()).join("");
         }
 
         function fsWrite(name, data){
@@ -370,7 +370,7 @@
             try{
                 const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
 
-                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await deflateEncode(await packEncode(Array.from($id("data").files)), false)));
+                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await deflateEncode(await packEncode([...$id("data").files]), false)));
 
                 dialogNotify("処理が完了しました");
             }
