@@ -6,8 +6,8 @@
         <meta name="referrer" content="no-referrer">
 
         <script>
-            if(!globalThis.SubtleCrypto || !globalThis.HTMLDialogElement || !globalThis.CompressionStream){
-                alert("ご使用のウェブブラウザは非対応です。\nChromeまたはEdgeをご使用ください。");
+            if(!globalThis.SubtleCrypto || !globalThis.HTMLDialogElement){
+                alert("ご使用のウェブブラウザは非対応です。");
                 stop();
             }
         </script>
@@ -60,8 +60,8 @@
                         <li>秘密鍵を保護するためのパスワード設定を求められるので、推測されにくい値を入力します。</li>
                         <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
                         <ul>
-                            <li><code>key-{乱数}.pub</code> : 公開鍵 (公開しても問題ない)</li>
-                            <li><code>key-{乱数}.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
+                            <li><code>{乱数}.pub</code> : 公開鍵 (公開しても問題ない)</li>
+                            <li><code>{乱数}.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
                         </ul>
                     </ol>
 
@@ -75,8 +75,8 @@
                         <li>送信者は、ツールの各フォームへファイルを入力します。</li>
                         <ul>
                             <li><a href="#data">データ</a> : 暗号化したいファイル (複数指定可能)</li>
-                            <li><a href="#public">公開鍵</a> : <code>key-{乱数}.pub</code> (受信者から受け取ったもの)</li>
-                            <li><a href="#secret">秘密鍵</a> : <code>key-{乱数}.sec</code> (自身で生成したもの)</li>
+                            <li><a href="#public">公開鍵</a> : <code>{乱数}.pub</code> (受信者から受け取ったもの)</li>
+                            <li><a href="#secret">秘密鍵</a> : <code>{乱数}.sec</code> (自身で生成したもの)</li>
                         </ul>
                         <li><a href="#encode">暗号化</a> ボタンを押し、処理を開始します。</li>
                         <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
@@ -119,7 +119,7 @@
                 <details>
                     <summary>安全性</summary>
                     <ul>
-                        <li>暗号処理は全てローカルで完結するため、インターネット通信を伴う処理はありません。</li>
+                        <li>暗号処理はローカルで完結するため、インターネット通信を伴う処理はありません。</li>
                         <li>サードパーティ製のライブラリは使用していません。</li>
                         <li>MITライセンス準拠のオープンソースソフトウェアとなります。</li>
                         <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
@@ -174,10 +174,6 @@
 
         function dvGetQuad(b){
             return new DataView(b).getUint32(0);
-        }
-
-        function toHex(data){
-            return [...new Uint8Array(data?.buffer ?? data)].map(n => n.toString(16).padStart(2, "0").toUpperCase()).join("");
         }
 
         function fsWrite(name, data){
@@ -252,14 +248,6 @@
                 tagLength: 128,
                 iv: v
             };
-        }
-
-        async function deflateEncode(data, gzip){
-            return new Response(new Blob([data]).stream().pipeThrough(new CompressionStream(gzip ? "gzip" : "deflate"))).arrayBuffer();
-        }
-
-        async function deflateDecode(data, gzip){
-            return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream(gzip ? "gzip" : "deflate"))).arrayBuffer();
         }
 
         async function packEncode(files){
@@ -370,11 +358,12 @@
             try{
                 const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
 
-                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await deflateEncode(await packEncode([...$id("data").files]), false)));
+                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await packEncode([...$id("data").files])));
 
                 dialogNotify("処理が完了しました");
             }
-            catch{
+            catch(e){
+                console.error(e);
                 dialogNotify("処理中にエラーが発生しました");
             }
         });
@@ -397,13 +386,14 @@
             try{
                 const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
 
-                for(const file of await packDecode(await deflateDecode(await wcDecryptData(await wcDeriveKey(pub, sec), await $id("data").files.item(0).arrayBuffer()), false))){
+                for(const file of await packDecode(await wcDecryptData(await wcDeriveKey(pub, sec), await $id("data").files.item(0).arrayBuffer()))){
                     fsWrite(file.name, file);
                 }
 
                 dialogNotify("処理が完了しました");
             }
-            catch{
+            catch(e){
+                console.error(e);
                 dialogNotify("処理中にエラーが発生しました");
             }
         });
@@ -420,14 +410,15 @@
 
             try{
                 const {pub, sec} = await wcExportKey(pw);
-                const id = toHex(crypto.getRandomValues(new Uint8Array(4)));
+                const id = crypto.randomUUID();
 
-                fsWrite(`key-${id}.pub`, pub);
-                fsWrite(`key-${id}.sec`, sec);
+                fsWrite(`${id}.pub`, pub);
+                fsWrite(`${id}.sec`, sec);
 
                 dialogNotify("処理が完了しました");
             }
-            catch{
+            catch(e){
+                console.error(e);
                 dialogNotify("処理中にエラーが発生しました");
             }
         });
