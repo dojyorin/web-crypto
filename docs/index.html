@@ -6,8 +6,8 @@
         <meta name="referrer" content="no-referrer">
 
         <script>
-            if(!globalThis.SubtleCrypto || !globalThis.HTMLDialogElement){
-                alert("ご使用のウェブブラウザは非対応です。");
+            if(!globalThis.SubtleCrypto || !globalThis.HTMLDialogElement || !globalThis.CompressionStream){
+                alert("ご使用のウェブブラウザは非対応です");
                 stop();
             }
         </script>
@@ -67,7 +67,7 @@
 
                     <h3>STEP2: 公開鍵を交換する (操作: 送信者/受信者)</h3>
                     <ol>
-                        <li>送信者と受信者は、それぞれ生成した <code>key-{乱数}.pub</code> を、電子メールなどで相互に交換します。</li>
+                        <li>送信者と受信者は、それぞれ生成した <code>{乱数}.pub</code> を、電子メールなどで相互に交換します。</li>
                     </ol>
 
                     <h3>STEP3: 暗号化を行う (操作: 送信者)</h3>
@@ -96,8 +96,8 @@
                         <li>受信者は、ツールの各フォームへファイルを入力します。</li>
                         <ul>
                             <li><a href="#data">データ</a> : <code>cipher.bin</code> (送信者から受け取ったもの)</li>
-                            <li><a href="#public">公開鍵</a> : <code>key-{乱数}.pub</code> (送信者から受け取ったもの)</li>
-                            <li><a href="#secret">秘密鍵</a> : <code>key-{乱数}.sec</code> (自身で生成したもの)</li>
+                            <li><a href="#public">公開鍵</a> : <code>{乱数}.pub</code> (送信者から受け取ったもの)</li>
+                            <li><a href="#secret">秘密鍵</a> : <code>{乱数}.sec</code> (自身で生成したもの)</li>
                         </ul>
                         <li><a href="#decode">復号</a> ボタンを押し、処理を開始します。</li>
                         <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
@@ -112,14 +112,14 @@
                         <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
                         <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">ECDH</a></li>
                         <li>公開鍵: <a href="https://datatracker.ietf.org/doc/html/rfc4492" target="_blank" rel="noopener">NIST P-521</a> - 521bit Key</li>
-                        <li>共通鍵: <a href="https://ja.wikipedia.org/wiki/Advanced_Encryption_Standard" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 128bit IV (96bit Nonce + 32bit Counter)</li>
+                        <li>共通鍵: <a href="https://ja.wikipedia.org/wiki/Advanced_Encryption_Standard" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 128bit IV</li>
                     </ul>
                 </details>
 
                 <details>
                     <summary>安全性</summary>
                     <ul>
-                        <li>暗号処理はローカルで完結するため、インターネット通信を伴う処理はありません。</li>
+                        <li>データ処理はローカルで完結するため、インターネット通信を伴う処理はありません。</li>
                         <li>サードパーティ製のライブラリは使用していません。</li>
                         <li>MITライセンス準拠のオープンソースソフトウェアとなります。</li>
                         <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
@@ -250,6 +250,14 @@
             };
         }
 
+        async function deflateEncode(data){
+            return new Response(new Blob([data]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer();
+        }
+
+        async function deflateDecode(data){
+            return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate"))).arrayBuffer();
+        }
+
         async function packEncode(files){
             if(files.some(({size, name: {length}}) => size > (0x100 ** packConfigHeader().size) || length > packConfigHeader().name)){
                 throw "";
@@ -358,7 +366,7 @@
             try{
                 const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
 
-                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await packEncode([...$id("data").files])));
+                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await deflateEncode(await packEncode([...$id("data").files]))));
 
                 dialogNotify("処理が完了しました");
             }
@@ -386,7 +394,7 @@
             try{
                 const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
 
-                for(const file of await packDecode(await wcDecryptData(await wcDeriveKey(pub, sec), await $id("data").files.item(0).arrayBuffer()))){
+                for(const file of await packDecode(await deflateDecode(await wcDecryptData(await wcDeriveKey(pub, sec), await $id("data").files.item(0).arrayBuffer())))){
                     fsWrite(file.name, file);
                 }
 
@@ -456,7 +464,7 @@
         }
         summary{
             cursor: pointer;
-            list-style-type: "\1F4D6";
+            list-style-type: "\1F4D6\20";
         }
         input, button{
             cursor: pointer;
@@ -469,11 +477,16 @@
             font-size: 14px;
             padding: 2px 8px;
         }
+        code{
+            padding: 0 4px;
+            border-radius: 2px;
+            background-color: #ECECEC;
+        }
         ul, ol{
             margin: 0;
         }
         ul.input{
-            list-style-type: "\1F4C2";
+            list-style-type: "\1F4C2\20";
             margin: 10px 0 20px 30px;
             padding: 0;
         }
