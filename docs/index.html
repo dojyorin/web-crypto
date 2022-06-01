@@ -32,12 +32,12 @@
 
                     <li>
                         <div>公開鍵</div>
-                        <input type="file" accept=".derive.pub" id="encrypt-public">
+                        <input type="file" accept=".encrypt.pub" id="encrypt-public">
                     </li>
 
                     <li>
                         <div>秘密鍵</div>
-                        <input type="file" accept=".derive.sec" id="encrypt-secret">
+                        <input type="file" accept=".encrypt.sec" id="encrypt-secret">
                     </li>
 
                     <li>
@@ -62,12 +62,12 @@
 
                     <li>
                         <div>公開鍵</div>
-                        <input type="file" accept=".derive.pub" id="decrypt-public">
+                        <input type="file" accept=".encrypt.pub" id="decrypt-public">
                     </li>
 
                     <li>
                         <div>秘密鍵</div>
-                        <input type="file" accept=".derive.sec" id="decrypt-secret">
+                        <input type="file" accept=".encrypt.sec" id="decrypt-secret">
                     </li>
 
                     <li>
@@ -96,78 +96,111 @@
                 <details>
                     <summary>使用方法</summary>
 
-                    <h3>STEP1: 鍵を生成する (操作: 送信者/受信者)</h3>
-                    <ol>
-                        <li>送信者と受信者は、それぞれ <a href="#generate">鍵生成</a> ボタンを押し、処理を開始します。</li>
-                        <li>秘密鍵を保護するためのパスワード設定を求められるので、推測されにくい値を入力します。</li>
-                        <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
-                        <ul>
-                            <li><code>{乱数}.pub</code> : 公開鍵 (公開しても問題ない)</li>
-                            <li><code>{乱数}.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
-                        </ul>
-                    </ol>
+                    <article>
+                        <h3>STEP0: 署名鍵を生成する (操作: 送信者)</h3>
 
-                    <h3>STEP2: 公開鍵を交換する (操作: 送信者/受信者)</h3>
-                    <ol>
-                        <li>送信者と受信者は、それぞれ生成した <code>{乱数}.pub</code> を、電子メールなどで相互に交換します。</li>
-                    </ol>
+                        <ol>
+                            <li>送信者は、それぞれ <a href="#sign-generate">署名用鍵生成ボタン</a> を押し、処理を開始します。</li>
+                            <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
+                            <ul>
+                                <li><code>{乱数}.sign.pub</code> : 公開鍵 (公開しても問題ない)</li>
+                                <li><code>{乱数}.sign.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
+                            </ul>
+                        </ol>
+                    </article>
 
-                    <h3>STEP3: 暗号化を行う (操作: 送信者)</h3>
-                    <ol>
-                        <li>送信者は、ツールの各フォームへファイルを入力します。</li>
-                        <ul>
-                            <li><a href="#data">データ</a> : 暗号化したいファイル (複数指定可能)</li>
-                            <li><a href="#public">公開鍵</a> : <code>{乱数}.pub</code> (受信者から受け取ったもの)</li>
-                            <li><a href="#secret">秘密鍵</a> : <code>{乱数}.sec</code> (自身で生成したもの)</li>
-                        </ul>
-                        <li><a href="#encode">暗号化</a> ボタンを押し、処理を開始します。</li>
-                        <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
-                        <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
-                        <ul>
-                            <li><code>cipher.bin</code> : 暗号データ (公開しても問題ない)</li>
-                        </ul>
-                    </ol>
+                    <article>
+                        <h3>STEP1: 暗号化鍵を生成する (操作: 送信者/受信者)</h3>
 
-                    <h3>STEP4: 暗号データを送信する (操作: 送信者)</h3>
-                    <ol>
-                        <li>送信者は、暗号化された <code>cipher.bin</code> を、電子メールなどで受信者へ渡します。</li>
-                    </ol>
+                        <ol>
+                            <li>送信者と受信者は、それぞれ <a href="#generate">鍵生成</a> ボタンを押し、処理を開始します。</li>
+                            <li>秘密鍵を保護するためのパスワード設定を求められるので、推測されにくい値を入力します。</li>
+                            <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
+                            <ul>
+                                <li><code>{乱数}.pub</code> : 公開鍵 (公開しても問題ない)</li>
+                                <li><code>{乱数}.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
+                            </ul>
+                        </ol>
+                    </article>
 
-                    <h3>STEP5: 暗号データを復号する (操作: 受信者)</h3>
-                    <ol>
-                        <li>受信者は、ツールの各フォームへファイルを入力します。</li>
-                        <ul>
-                            <li><a href="#data">データ</a> : <code>cipher.bin</code> (送信者から受け取ったもの)</li>
-                            <li><a href="#public">公開鍵</a> : <code>{乱数}.pub</code> (送信者から受け取ったもの)</li>
-                            <li><a href="#secret">秘密鍵</a> : <code>{乱数}.sec</code> (自身で生成したもの)</li>
-                        </ul>
-                        <li><a href="#decode">復号</a> ボタンを押し、処理を開始します。</li>
-                        <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
-                        <li>処理が完了すると、元のファイルがダウンロードされます。</li>
-                    </ol>
+                    <article>
+                        <h3>STEP2: 公開鍵を交換する (操作: 送信者/受信者)</h3>
+
+                        <ol>
+                            <li>送信者と受信者は、それぞれ生成した <code>{乱数}.pub</code> を、電子メールなどで相互に交換します。</li>
+                        </ol>
+                    </article>
+
+                    <article>
+                        <h3>STEP3: 暗号化を行う (操作: 送信者)</h3>
+
+                        <ol>
+                            <li>送信者は、ツールの各フォームへファイルを入力します。</li>
+                            <ul>
+                                <li><a href="#data">データ</a> : 暗号化したいファイル (複数指定可能)</li>
+                                <li><a href="#public">公開鍵</a> : <code>{乱数}.pub</code> (受信者から受け取ったもの)</li>
+                                <li><a href="#secret">秘密鍵</a> : <code>{乱数}.sec</code> (自身で生成したもの)</li>
+                            </ul>
+                            <li><a href="#encode">暗号化</a> ボタンを押し、処理を開始します。</li>
+                            <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
+                            <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
+                            <ul>
+                                <li><code>cipher.bin</code> : 暗号データ (公開しても問題ない)</li>
+                            </ul>
+                        </ol>
+                    </article>
+
+                    <article>
+                        <h3>STEP4: 暗号データを送信する (操作: 送信者)</h3>
+
+                        <ol>
+                            <li>送信者は、暗号化された <code>cipher.bin</code> を、電子メールなどで受信者へ渡します。</li>
+                        </ol>
+                    </article>
+
+                    <article>
+                        <h3>STEP5: 暗号データを復号する (操作: 受信者)</h3>
+
+                        <ol>
+                            <li>受信者は、ツールの各フォームへファイルを入力します。</li>
+                            <ul>
+                                <li><a href="#data">データ</a> : <code>cipher.bin</code> (送信者から受け取ったもの)</li>
+                                <li><a href="#public">公開鍵</a> : <code>{乱数}.pub</code> (送信者から受け取ったもの)</li>
+                                <li><a href="#secret">秘密鍵</a> : <code>{乱数}.sec</code> (自身で生成したもの)</li>
+                            </ul>
+                            <li><a href="#decode">復号</a> ボタンを押し、処理を開始します。</li>
+                            <li>秘密鍵のパスワードを求められるので、鍵生成のときに設定したパスワードを入力します。</li>
+                            <li>処理が完了すると、元のファイルがダウンロードされます。</li>
+                        </ol>
+                    </article>
                 </details>
 
                 <details>
                     <summary>技術仕様</summary>
 
-                    <ul>
-                        <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
-                        <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">ECDH</a></li>
-                        <li>公開鍵: <a href="https://datatracker.ietf.org/doc/html/rfc4492" target="_blank" rel="noopener">NIST P-521</a> - 521bit Key</li>
-                        <li>共通鍵: <a href="https://ja.wikipedia.org/wiki/Advanced_Encryption_Standard" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 128bit IV</li>
-                    </ul>
+                    <article>
+                        <ul>
+                            <li>実装: <a href="https://www.w3.org/TR/WebCryptoAPI" target="_blank" rel="noopener">Web Crypto API</a></li>
+                            <li>鍵交換: <a href="https://ja.wikipedia.org/wiki/楕円曲線ディフィー・ヘルマン鍵共有" target="_blank" rel="noopener">ECDH</a></li>
+                            <li>公開鍵: <a href="https://datatracker.ietf.org/doc/html/rfc4492" target="_blank" rel="noopener">NIST P-521</a> - 521bit Key</li>
+                            <li>共通鍵: <a href="https://ja.wikipedia.org/wiki/Advanced_Encryption_Standard" target="_blank" rel="noopener">AES-GCM</a> - 256bit Key, 128bit Tag, 128bit IV</li>
+                        </ul>
+                    </article>
                 </details>
 
                 <details>
                     <summary>安全性</summary>
-                    <ul>
-                        <li>データ処理はローカルで完結するため、インターネット通信を伴う処理はありません。</li>
-                        <li>サードパーティ製のライブラリは使用していません。</li>
-                        <li>MITライセンス準拠のオープンソースソフトウェアとなります。</li>
-                        <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
-                        <li>リポジトリ: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
-                        <li>お問い合わせ: <a href="https://twitter.com/dojyorin" target="_blank" rel="noopener">Twitter</a></li>
-                    </ul>
+
+                    <article>
+                        <ul>
+                            <li>データ処理はローカルで完結するため、インターネット通信を伴う処理はありません。</li>
+                            <li>サードパーティ製のライブラリは使用していません。</li>
+                            <li>MITライセンス準拠のオープンソースソフトウェアとなります。</li>
+                            <li>ハッシュ値: <a href="https://dojyorin.github.io/web-crypto/sha512.txt" target="_blank" rel="noopener">SHA512</a></li>
+                            <li>リポジトリ: <a href="https://github.com/dojyorin/web-crypto" target="_blank" rel="noopener">GitHub</a></li>
+                            <li>お問い合わせ: <a href="https://twitter.com/dojyorin" target="_blank" rel="noopener">Twitter</a></li>
+                        </ul>
+                    </article>
                 </details>
             </section>
         </main>
@@ -459,8 +492,8 @@
                 const {pub, sec} = await cryptoExportDerive();
                 const id = crypto.randomUUID();
 
-                fsWrite(`${id}.derive.pub`, pub);
-                fsWrite(`${id}.derive.sec`, sec);
+                fsWrite(`${id}.encrypt.pub`, pub);
+                fsWrite(`${id}.encrypt.sec`, sec);
 
                 dialogNotify("処理が完了しました");
             }
