@@ -22,29 +22,71 @@
 
         <main>
             <section>
-                <h2>暗号化/復号</h2>
+                <h2>暗号化</h2>
 
                 <ul class="input">
                     <li>
                         <div>データ</div>
-                        <input multiple type="file" id="data">
+                        <input multiple type="file" id="encrypt-files">
                     </li>
 
                     <li>
                         <div>公開鍵</div>
-                        <input type="file" accept=".pub" id="public">
+                        <input type="file" accept=".pub" id="encrypt-public">
                     </li>
 
                     <li>
                         <div>秘密鍵</div>
-                        <input type="file" accept=".sec" id="secret">
+                        <input type="file" accept=".sec" id="encrypt-secret">
+                    </li>
+
+                    <li>
+                        <div>秘密鍵(署名用)</div>
+                        <input type="file" accept=".sec" id="sign-secret">
                     </li>
                 </ul>
 
                 <p>
-                    <button type="button" id="encode">&#x1F512; 暗号化</button>
-                    <button type="button" id="decode">&#x1F513; 復号</button>
-                    <button type="button" id="generate">&#x1F511; 鍵生成</button>
+                    <button type="button" id="encrypt-execute">&#x1F512; 暗号化</button>
+                </p>
+            </section>
+
+            <section>
+                <h2>復号</h2>
+
+                <ul class="input">
+                    <li>
+                        <div>データ</div>
+                        <input multiple type="file" id="decrypt-file">
+                    </li>
+
+                    <li>
+                        <div>公開鍵</div>
+                        <input type="file" accept=".pub" id="decrypt-public">
+                    </li>
+
+                    <li>
+                        <div>秘密鍵</div>
+                        <input type="file" accept=".sec" id="decrypt-secret">
+                    </li>
+
+                    <li>
+                        <div>公開鍵(検証用)</div>
+                        <input type="file" accept=".pub" id="verify-public">
+                    </li>
+                </ul>
+
+                <p>
+                    <button type="button" id="decrypt-execute">&#x1F513; 復号</button>
+                </p>
+            </section>
+
+            <section>
+                <h2>鍵生成</h2>
+
+                <p>
+                    <button type="button" id="encrypt-generate">&#x1F511; 暗号化用</button>
+                    <button type="button" id="sign-generate">&#x1F511; 署名用</button>
                 </p>
             </section>
 
@@ -441,23 +483,28 @@
             margin: 0 !important;
             padding: 0 !important;
         }
-        header{
-            margin: 20px;
-        }
-        main{
-            margin: 0 10px;
-        }
         h1, h2, h3{
-            margin: 0;
-        }
-        h3{
-            margin-top: 16px;
-        }
-        section{
-            margin-top: 20px;
+            margin: 16px;
         }
         p{
-            margin: 10px;
+            margin: 10px 10px 10px 30px;
+        }
+        input, button{
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        input{
+            margin-top: 4px;
+        }
+        button{
+            font-size: 14px;
+            padding: 2px 0;
+            width: 150px;
+        }
+        code{
+            padding: 0 2px;
+            border-radius: 2px;
+            background-color: #DBDBDB;
         }
         details{
             margin: 10px;
@@ -466,35 +513,16 @@
             cursor: pointer;
             list-style-type: "\1F4D6\20";
         }
-        input, button{
-            cursor: pointer;
-            box-sizing: border-box;
-        }
-        input{
-            margin-top: 6px;
-        }
-        button{
-            font-size: 14px;
-            padding: 2px 8px;
-        }
-        code{
-            padding: 0 2px;
-            border-radius: 2px;
-            background-color: #DBDBDB;
-        }
         ul, ol{
             margin: 0;
         }
         ul.input{
             list-style-type: "\1F4C2\20";
-            margin: 10px 0 20px 30px;
+            margin: 0 0 0 50px;
             padding: 0;
         }
         ul.input > li{
-            margin-bottom: 16px;
-        }
-        ul.input > li:last-of-type{
-            margin-bottom: unset;
+            margin-bottom: 10px;
         }
     </style>
 </html>
