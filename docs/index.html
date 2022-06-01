@@ -32,17 +32,17 @@
 
                     <li>
                         <div>公開鍵</div>
-                        <input type="file" accept=".pub" id="encrypt-public">
+                        <input type="file" accept=".derive.pub" id="encrypt-public">
                     </li>
 
                     <li>
                         <div>秘密鍵</div>
-                        <input type="file" accept=".sec" id="encrypt-secret">
+                        <input type="file" accept=".derive.sec" id="encrypt-secret">
                     </li>
 
                     <li>
                         <div>秘密鍵(署名用)</div>
-                        <input type="file" accept=".sec" id="sign-secret">
+                        <input type="file" accept=".sign.sec" id="sign-secret">
                     </li>
                 </ul>
 
@@ -57,22 +57,22 @@
                 <ul class="input">
                     <li>
                         <div>データ</div>
-                        <input multiple type="file" id="decrypt-file">
+                        <input type="file" accept=".cipher.bin" id="decrypt-file">
                     </li>
 
                     <li>
                         <div>公開鍵</div>
-                        <input type="file" accept=".pub" id="decrypt-public">
+                        <input type="file" accept=".derive.pub" id="decrypt-public">
                     </li>
 
                     <li>
                         <div>秘密鍵</div>
-                        <input type="file" accept=".sec" id="decrypt-secret">
+                        <input type="file" accept=".derive.sec" id="decrypt-secret">
                     </li>
 
                     <li>
                         <div>公開鍵(検証用)</div>
-                        <input type="file" accept=".pub" id="verify-public">
+                        <input type="file" accept=".sign.pub" id="verify-public">
                     </li>
                 </ul>
 
@@ -174,48 +174,47 @@
     </body>
 
     <script async type="module">
+        function packConfigHEADER(){
+            return {
+                size: 4,
+                hash: 64,
+                name: 256
+            };
+        }
+
+        function cryptoConfigECDH(){
+            return {
+                name: "ECDH",
+                namedCurve: "P-521"
+            };
+        }
+
+        function cryptoConfigECDSA(){
+            return {
+                name: "ECDSA",
+                namedCurve: "P-521"
+            };
+        }
+
+        function cryptoConfigGCM(v){
+            return {
+                name: "AES-GCM",
+                tagLength: 128,
+                iv: v
+            };
+        }
+
+        function cryptoConfigDSA(){
+            return {
+                name: "ECDSA",
+                hash: {
+                    name: "SHA-512"
+                }
+            };
+        }
+
         function $id(id){
             return document.getElementById(id);
-        }
-
-        function bufferJoin(...sources){
-            const data = new Uint8Array(sources.reduce((a, {byteLength}) => a += byteLength, 0));
-
-            let offset = 0;
-            for(const source of sources){
-                data.set(new Uint8Array(source?.buffer ?? source), offset);
-                offset += source.byteLength;
-            }
-
-            return data.buffer;
-        }
-
-        function bufferEqual(source1, source2){
-            const dv1 = new DataView(source1?.buffer ?? source1);
-            const dv2 = new DataView(source2?.buffer ?? source2);
-
-            if(dv1.byteLength !== dv2.byteLength){
-                return false;
-            }
-
-            for(let i = 0; i < dv1.byteLength; i++){
-                if(dv1.getUint8(i) !== dv2.getUint8(i)){
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        function dvSetQuad(n){
-            const dv = new DataView(new ArrayBuffer(4));
-            dv.setUint32(0, n);
-
-            return dv.buffer;
-        }
-
-        function dvGetQuad(b){
-            return new DataView(b).getUint32(0);
         }
 
         function fsWrite(name, data){
@@ -246,50 +245,19 @@
             document.body.appendChild(dialog);
         }
 
-        function packConfigHeader(){
-            return {
-                size: 4,
-                hash: 64,
-                name: 256
-            };
+        async function toArrayBuffer(element){
+            return Promise.all([...element?.files ?? []].map(file => file.arrayBuffer()));
         }
 
-        function wcConfigPBKDF2(v){
-            return {
-                name: "PBKDF2",
-                hash: "SHA-512",
-                iterations: 0xFFFF,
-                salt: v
-            };
+        async function bufferConcat(...buffers){
+            return new Blob(buffers).arrayBuffer();
         }
 
-        function wcConfigECC(){
-            return {
-                name: "ECDH",
-                namedCurve: "P-521"
-            };
-        }
+        function bufferEquals(buffer1, buffer2){
+            const dv1 = new DataView(buffer1);
+            const dv2 = new DataView(buffer2);
 
-        function wcConfigECDH(v){
-            return {
-                name: "ECDH",
-                public: v
-            };
-        }
-
-        function wcConfigAES(){
-            return {
-                name: "AES-GCM",
-                length: 256
-            };
-        }
-
-        function wcConfigGCM(v){
-            return {
-                name: "AES-GCM",
-                tagLength: 128,
-                iv: v
-            };
+            return dv1.byteLength === dv2.byteLength && new Array(dv1.byteLength).fill(null).every((_, i) => dv1.getUint8(i) === dv2.getUint8(i));
         }
 
         async function deflateEncode(data){
@@ -301,22 +269,26 @@
         }
 
         async function packEncode(files){
-            if(files.some(({size, name: {length}}) => size > (0x100 ** packConfigHeader().size) || length > packConfigHeader().name)){
-                throw "";
+            if(files.some(({size, name}) => size > (0x100 ** packConfigHEADER().size) || new TextEncoder().encode(name).byteLength > packConfigHEADER().name)){
+                throw null;
             }
 
-            const archive = new Uint8Array(Object.values(packConfigHeader()).reduce((a, b) => a + b, 0) * files.length + files.reduce((a, {size}) => a + size, 0));
+            const archive = new Uint8Array(Object.values(packConfigHEADER()).reduce((a, b) => a + b, 0) * files.length + files.reduce((a, {size}) => a + size, 0));
 
             let offset = 0;
+
             for(const file of files){
                 const data = await file.arrayBuffer();
 
-                archive.set(new Uint8Array(dvSetQuad(file.size)), offset);
-                offset += packConfigHeader().size;
-                archive.set(new Uint8Array(await wcHashDigest(data)), offset);
-                offset += packConfigHeader().hash
+                const dv = new DataView(new ArrayBuffer(4));
+                dv.setUint32(0, file.size);
+
+                archive.set(new Uint8Array(dv.buffer), offset);
+                offset += packConfigHEADER().size;
+                archive.set(new Uint8Array(await cryptoDigest(data)), offset);
+                offset += packConfigHEADER().hash
                 archive.set(new TextEncoder().encode(file.name), offset);
-                offset += packConfigHeader().name
+                offset += packConfigHEADER().name
                 archive.set(new Uint8Array(data), offset);
                 offset += file.size;
             }
@@ -328,14 +300,15 @@
             const files = [];
 
             let offset = 0;
+
             while(offset < archive.byteLength){
-                const size = dvGetQuad(archive.slice(offset, offset += packConfigHeader().size));
-                const hash = archive.slice(offset, offset += packConfigHeader().hash);
-                const name = new TextDecoder().decode(archive.slice(offset, offset += packConfigHeader().name)).replace(/\0+$/, "");
+                const size = new DataView(archive.slice(offset, offset += packConfigHEADER().size)).getUint32(0);
+                const hash = archive.slice(offset, offset += packConfigHEADER().hash);
+                const name = new TextDecoder().decode(archive.slice(offset, offset += packConfigHEADER().name)).replace(/\0+$/, "");
                 const data = archive.slice(offset, offset += size);
 
-                if(!bufferEqual(hash, await wcHashDigest(data))){
-                    throw "";
+                if(!bufferEquals(hash, await cryptoDigest(data))){
+                    throw null;
                 }
 
                 files.push(new File([data], name));
@@ -344,71 +317,94 @@
             return files;
         }
 
-        async function wcHashDigest(data){
+        async function cryptoDigest(data){
             return crypto.subtle.digest("SHA-512", data);
         }
 
-        async function wcDerivePassword(pw, salt){
-            return crypto.subtle.deriveKey(wcConfigPBKDF2(salt), await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]), wcConfigAES(), false, ["wrapKey", "unwrapKey"]);
-        }
-
-        async function wcExportKey(pw){
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            const salt = crypto.getRandomValues(new Uint8Array(16));
-
-            const {publicKey, privateKey} = await crypto.subtle.generateKey(wcConfigECC(), true, ["deriveKey"]);
+        async function cryptoExportDerive(){
+            const {publicKey, privateKey} = await crypto.subtle.generateKey(cryptoConfigECDH(), true, ["deriveKey"]);
 
             return {
                 pub: await crypto.subtle.exportKey("spki", publicKey),
-                sec: bufferJoin(iv, salt, await crypto.subtle.wrapKey("pkcs8", privateKey, await wcDerivePassword(pw, salt), wcConfigGCM(iv)))
+                sec: await crypto.subtle.exportKey("pkcs8", privateKey)
             };
         }
 
-        async function wcImportKey(pub, sec, pw){
-            const vpub = new Uint8Array(pub?.buffer ?? pub);
-            const vsec = new Uint8Array(sec?.buffer ?? sec);
+        async function cryptoExportSign(){
+            const {publicKey, privateKey} = await crypto.subtle.generateKey(cryptoConfigECDSA(), true, ["sign", "verify"]);
 
             return {
-                pub: await crypto.subtle.importKey("spki", vpub, wcConfigECC(), false, []),
-                sec: await crypto.subtle.unwrapKey("pkcs8", vsec.subarray(28), await wcDerivePassword(pw, vsec.subarray(12, 28)), wcConfigGCM(vsec.subarray(0, 12)), wcConfigECC(), false, ["deriveKey"])
+                pub: await crypto.subtle.exportKey("spki", publicKey),
+                sec: await crypto.subtle.exportKey("pkcs8", privateKey)
             };
         }
 
-        async function wcDeriveKey(pub, sec){
-            return crypto.subtle.deriveKey(wcConfigECDH(pub), sec, wcConfigAES(), false, ["encrypt", "decrypt"]);
+        async function cryptoDerive(pub, sec){
+            const _pub = await crypto.subtle.importKey("spki", pub, cryptoConfigECDH(), false, []);
+            const _sec = await crypto.subtle.importKey("pkcs8", sec, cryptoConfigECDH(), false, ["deriveKey"]);
+
+            const algorithm = {
+                name: "ECDH",
+                public: _pub
+            };
+
+            const type = {
+                name: "AES-GCM",
+                length: 256
+            };
+
+            return crypto.subtle.deriveKey(algorithm, _sec, type, false, ["encrypt", "decrypt"]);
         }
 
-        async function wcEncryptData(com, data){
+        async function cryptoEncrypt(com, data){
             const iv = crypto.getRandomValues(new Uint8Array(12));
 
-            return bufferJoin(iv, await crypto.subtle.encrypt(wcConfigGCM(iv), com, data));
+            return bufferConcat(iv, await crypto.subtle.encrypt(cryptoConfigGCM(iv), com, data));
         }
 
-        async function wcDecryptData(com, data){
-            const vdata = new Uint8Array(data?.buffer ?? data);
+        async function cryptoDecrypt(com, data){
+            const _data = new Uint8Array(data);
 
-            return crypto.subtle.decrypt(wcConfigGCM(vdata.subarray(0, 12)), com, vdata.subarray(12));
+            return crypto.subtle.decrypt(cryptoConfigGCM(_data.subarray(0, 12)), com, _data.subarray(12));
         }
 
-        $id("encode").addEventListener("click", async()=>{
-            if(!$id("data").files.length || $id("public").files.length !== 1 || $id("secret").files.length !== 1){
+        async function cryptoSign(sec, data){
+            const _sec = await crypto.subtle.importKey("pkcs8", sec, cryptoConfigECDSA(), false, ["sign"]);
+
+            return crypto.subtle.sign(cryptoConfigDSA(), _sec, data);
+        }
+
+        async function cryptoVerify(pub, sign, data){
+            const _pub = await crypto.subtle.importKey("spki", pub, cryptoConfigECDSA(), false, ["verify"]);
+
+            return crypto.subtle.verify(cryptoConfigDSA(), _pub, sign, data);
+        }
+
+        $id("encrypt-execute").addEventListener("click", async()=>{
+            const _files = [...$id("encrypt-files").files];
+            const [_pub] = await toArrayBuffer($id("encrypt-public"));
+            const [_sec_e] = await toArrayBuffer($id("encrypt-secret"));
+            const [_sec_s] = await toArrayBuffer($id("sign-secret"));
+
+            if(!_files.length || !_pub || !_sec_e || !_sec_s){
                 dialogNotify("ファイルを選択してください");
-                return;
-            }
-
-            const pw = prompt("秘密鍵に設定されているパスワード");
-
-            if(!pw){
-                dialogNotify("パスワードを入力してください");
                 return;
             }
 
             dialogNotify("処理を開始しました");
 
             try{
-                const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
+                const pack = await packEncode(_files);
+                const deflate = await deflateEncode(pack);
 
-                fsWrite("cipher.bin", await wcEncryptData(await wcDeriveKey(pub, sec), await deflateEncode(await packEncode([...$id("data").files]))));
+                const key = await cryptoDerive(_pub, _sec_e);
+                const encrypt = await cryptoEncrypt(key, deflate);
+                const sign = await cryptoSign(_sec_s, deflate);
+
+                const output = await bufferConcat(sign, encrypt);
+                const id = crypto.randomUUID();
+
+                fsWrite(`${id}.cipher.bin`, output);
 
                 dialogNotify("処理が完了しました");
             }
@@ -418,25 +414,33 @@
             }
         });
 
-        $id("decode").addEventListener("click", async()=>{
-            if($id("data").files.length !== 1 || $id("public").files.length !== 1 || $id("secret").files.length !== 1){
+        $id("decrypt-execute").addEventListener("click", async()=>{
+            const [_file] = await toArrayBuffer($id("decrypt-file"));
+            const [_pub_e] = await toArrayBuffer($id("decrypt-public"));
+            const [_sec] = await toArrayBuffer($id("decrypt-secret"));
+            const [_pub_v] = await toArrayBuffer($id("verify-public"));
+
+            if(!_file || !_pub_e || !_sec || !_pub_v){
                 dialogNotify("ファイルを選択してください");
-                return;
-            }
-
-            const pw = prompt("秘密鍵に設定されているパスワード");
-
-            if(!pw){
-                dialogNotify("パスワードを入力してください");
                 return;
             }
 
             dialogNotify("処理を開始しました");
 
             try{
-                const {pub, sec} = await wcImportKey(await $id("public").files.item(0).arrayBuffer(), await $id("secret").files.item(0).arrayBuffer(), pw);
+                const key = await cryptoDerive(_pub_e, _sec);
+                const decrypt = await cryptoDecrypt(key, _file.slice(132));
+                const verify = await cryptoVerify(_pub_v, _file.slice(0, 132), decrypt);
 
-                for(const file of await packDecode(await deflateDecode(await wcDecryptData(await wcDeriveKey(pub, sec), await $id("data").files.item(0).arrayBuffer())))){
+                if(!verify){
+                    dialogNotify("署名が一致しません");
+                    return;
+                }
+
+                const inflate = await deflateDecode(decrypt);
+                const unpack = await packDecode(inflate);
+
+                for(const file of unpack){
                     fsWrite(file.name, file);
                 }
 
@@ -448,22 +452,33 @@
             }
         });
 
-        $id("generate").addEventListener("click", async()=>{
-            const pw = prompt("秘密鍵に設定するパスワード");
-
-            if(!pw){
-                dialogNotify("パスワードを入力してください");
-                return;
-            }
-
+        $id("encrypt-generate").addEventListener("click", async()=>{
             dialogNotify("処理を開始しました");
 
             try{
-                const {pub, sec} = await wcExportKey(pw);
+                const {pub, sec} = await cryptoExportDerive();
                 const id = crypto.randomUUID();
 
-                fsWrite(`${id}.pub`, pub);
-                fsWrite(`${id}.sec`, sec);
+                fsWrite(`${id}.derive.pub`, pub);
+                fsWrite(`${id}.derive.sec`, sec);
+
+                dialogNotify("処理が完了しました");
+            }
+            catch(e){
+                console.error(e);
+                dialogNotify("処理中にエラーが発生しました");
+            }
+        });
+
+        $id("sign-generate").addEventListener("click", async()=>{
+            dialogNotify("処理を開始しました");
+
+            try{
+                const {pub, sec} = await cryptoExportSign();
+                const id = crypto.randomUUID();
+
+                fsWrite(`${id}.sign.pub`, pub);
+                fsWrite(`${id}.sign.sec`, sec);
 
                 dialogNotify("処理が完了しました");
             }
