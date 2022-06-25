@@ -139,7 +139,7 @@
                                 <li><a href="#encrypt-files">データ</a> : 暗号化したいファイル (複数指定可能)</li>
                                 <li><a href="#encrypt-public">公開鍵</a> : <code>{乱数}.encrypt.pub</code> (受信者から受け取ったもの)</li>
                                 <li><a href="#encrypt-secret">秘密鍵</a> : <code>{乱数}.encrypt.sec</code> (自身で生成したもの)</li>
-                                <li><a href="#encrypt-secret">秘密鍵(署名用)</a> : <code>{乱数}.sign.sec</code> (自身で生成したもの)</li>
+                                <li><a href="#sign-secret">秘密鍵(署名用)</a> : <code>{乱数}.sign.sec</code> (自身で生成したもの)</li>
                             </ul>
                             <li><a href="#encrypt-execute">暗号化</a> ボタンを押し、処理を開始します。</li>
                             <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
@@ -294,11 +294,11 @@
         }
 
         async function deflateEncode(data){
-            return new Response(new Blob([data]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer();
+            return new Response(new Blob([data]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer();
         }
 
         async function deflateDecode(data){
-            return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate"))).arrayBuffer();
+            return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer();
         }
 
         async function packEncode(files){
