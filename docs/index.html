@@ -36,19 +36,19 @@
                     </li>
 
                     <li>
-                        <div>秘密鍵</div>
+                        <div>秘密鍵(暗号化)</div>
                         <input type="file" accept=".encrypt.sec" id="encrypt-secret">
                     </li>
 
                     <li>
-                        <div>秘密鍵(署名用)</div>
+                        <div>秘密鍵(署名/任意)</div>
                         <input type="file" accept=".sign.sec" id="sign-secret">
                     </li>
                 </ul>
 
-                <p>
+                <div class="input">
                     <button type="button" id="encrypt-execute">&#x1F512; 暗号化</button>
-                </p>
+                </div>
             </section>
 
             <section>
@@ -61,7 +61,7 @@
                     </li>
 
                     <li>
-                        <div>公開鍵</div>
+                        <div>公開鍵(復号)</div>
                         <input type="file" accept=".encrypt.pub" id="decrypt-public">
                     </li>
 
@@ -71,40 +71,46 @@
                     </li>
 
                     <li>
-                        <div>公開鍵(検証用)</div>
+                        <div>公開鍵(検証/任意)</div>
                         <input type="file" accept=".sign.pub" id="verify-public">
                     </li>
                 </ul>
 
-                <p>
+                <div class="input">
                     <button type="button" id="decrypt-execute">&#x1F513; 復号</button>
-                </p>
+                </div>
             </section>
 
             <section>
                 <h2>鍵生成</h2>
 
-                <p>
+                <div class="input">
                     <button type="button" id="encrypt-generate">&#x1F511; 暗号化用</button>
                     <button type="button" id="sign-generate">&#x1F511; 署名用</button>
-                </p>
+                </div>
             </section>
 
             <section>
                 <h2>ドキュメント</h2>
 
                 <details>
-                    <summary>使用方法</summary>
+                    <summary class="document">使用方法</summary>
 
                     <article>
-                        <h3>STEP0: 署名鍵を生成する (操作: 送信者)</h3>
+                        <h3>STEP0: 署名鍵を生成する (任意) (操作: 送信者)</h3>
 
                         <ol>
+                            <li>署名が不要な場合は、本手順をスキップし次の手順へ進みます。</li>
                             <li>送信者は、最初に <a href="#sign-generate">署名鍵生成ボタン</a> を押し、処理を開始します。</li>
                             <li>処理が完了すると、2個のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
                             <ul>
                                 <li><code>{乱数}.sign.pub</code> : 公開鍵 (公開しても問題ない)</li>
                                 <li><code>{乱数}.sign.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
+                            </ul>
+                            <li>生成した <code>{乱数}.sign.pub</code> を任意の方法で受信者へ送信します。</li>
+                            <ul>
+                                <li>署名鍵は、秘密鍵の紛失や漏洩が無い限り再利用を推奨します。</li>
+                                <li>送信方法は、後述の暗号化ファイルの送信で使用する方法とは別の方法を推奨します。</li>
                             </ul>
                         </ol>
                     </article>
@@ -119,54 +125,43 @@
                                 <li><code>{乱数}.encrypt.pub</code> : 公開鍵 (公開しても問題ない)</li>
                                 <li><code>{乱数}.encrypt.sec</code> : 秘密鍵 (絶対に公開してはいけない)</li>
                             </ul>
-                        </ol>
-                    </article>
-
-                    <article>
-                        <h3>STEP2: 公開鍵を交換する (操作: 送信者/受信者)</h3>
-
-                        <ol>
                             <li>送信者と受信者は、それぞれ生成した <code>{乱数}.encrypt.pub</code> を、電子メールなどで相互に交換します。</li>
+                            <ul>
+                                <li>暗号化鍵は、再利用せず都度生成を推奨します。</li>
+                            </ul>
                         </ol>
                     </article>
 
                     <article>
-                        <h3>STEP3: 暗号化を行う (操作: 送信者)</h3>
+                        <h3>STEP2: 暗号化を行う (操作: 送信者)</h3>
 
                         <ol>
                             <li>送信者は、ツールの各フォームへファイルを入力します。</li>
                             <ul>
                                 <li><a href="#encrypt-files">データ</a> : 暗号化したいファイル (複数指定可能)</li>
                                 <li><a href="#encrypt-public">公開鍵</a> : <code>{乱数}.encrypt.pub</code> (受信者から受け取ったもの)</li>
-                                <li><a href="#encrypt-secret">秘密鍵</a> : <code>{乱数}.encrypt.sec</code> (自身で生成したもの)</li>
-                                <li><a href="#sign-secret">秘密鍵(署名用)</a> : <code>{乱数}.sign.sec</code> (自身で生成したもの)</li>
+                                <li><a href="#encrypt-secret">秘密鍵(暗号化)</a> : <code>{乱数}.encrypt.sec</code> (自身で生成したもの)</li>
+                                <li><a href="#sign-secret">秘密鍵(署名/任意)</a> : <code>{乱数}.sign.sec</code> (自身で生成したもの)</li>
                             </ul>
                             <li><a href="#encrypt-execute">暗号化</a> ボタンを押し、処理を開始します。</li>
                             <li>処理が完了すると、1個のファイルがダウンロードされます。</li>
                             <ul>
                                 <li><code>{乱数}.cipher.bin</code> : 暗号データ (公開しても問題ない)</li>
                             </ul>
+                            <li>送信者は、暗号化された <code>{乱数}.cipher.bin</code> を、電子メールなど任意の方法で受信者へ送信します。</li>
                         </ol>
                     </article>
 
                     <article>
-                        <h3>STEP4: 暗号データを送信する (操作: 送信者)</h3>
-
-                        <ol>
-                            <li>送信者は、暗号化された <code>{乱数}.cipher.bin</code> を、電子メールなどで受信者へ渡します。</li>
-                        </ol>
-                    </article>
-
-                    <article>
-                        <h3>STEP5: 暗号データを復号する (操作: 受信者)</h3>
+                        <h3>STEP3: 暗号データを復号する (操作: 受信者)</h3>
 
                         <ol>
                             <li>受信者は、ツールの各フォームへファイルを入力します。</li>
                             <ul>
                                 <li><a href="#decrypt-file">データ</a> : <code>{乱数}.cipher.bin</code> (送信者から受け取ったもの)</li>
-                                <li><a href="#decrypt-public">公開鍵</a> : <code>{乱数}.encrypt.pub</code> (送信者から受け取ったもの)</li>
+                                <li><a href="#decrypt-public">公開鍵(復号)</a> : <code>{乱数}.encrypt.pub</code> (送信者から受け取ったもの)</li>
                                 <li><a href="#decrypt-secret">秘密鍵</a> : <code>{乱数}.encrypt.sec</code> (自身で生成したもの)</li>
-                                <li><a href="#verify-public">公開鍵(検証用)</a> : <code>{乱数}.sign.pub</code> (送信者から受け取ったもの)</li>
+                                <li><a href="#verify-public">公開鍵(検証/任意)</a> : <code>{乱数}.sign.pub</code> (送信者から受け取ったもの)</li>
                             </ul>
                             <li><a href="#decrypt-execute">復号</a> ボタンを押し、処理を開始します。</li>
                             <li>処理が完了すると、元のファイルがダウンロードされます。(許可を要求された場合は許可します)</li>
@@ -175,7 +170,7 @@
                 </details>
 
                 <details>
-                    <summary>技術仕様</summary>
+                    <summary class="document">技術仕様</summary>
 
                     <article>
                         <ul>
@@ -189,7 +184,7 @@
                 </details>
 
                 <details>
-                    <summary>安全性</summary>
+                    <summary class="document">安全性</summary>
 
                     <article>
                         <ul>
@@ -419,7 +414,7 @@
             const [_sec_e] = await toArrayBuffer($id("encrypt-secret"));
             const [_sec_s] = await toArrayBuffer($id("sign-secret"));
 
-            if(!_files.length || !_pub || !_sec_e || !_sec_s){
+            if(!_files.length || !_pub || !_sec_e){
                 dialogNotify("ファイルを選択してください");
                 return;
             }
@@ -432,7 +427,8 @@
 
                 const key = await cryptoDerive(_pub, _sec_e);
                 const encrypt = await cryptoEncrypt(key, deflate);
-                const sign = await cryptoSign(_sec_s, deflate);
+
+                const sign = _sec_s ? await cryptoSign(_sec_s, deflate) : crypto.getRandomValues(new Uint8Array(132)).buffer;
 
                 const output = await bufferConcat(sign, encrypt);
                 const id = crypto.randomUUID();
@@ -453,7 +449,7 @@
             const [_sec] = await toArrayBuffer($id("decrypt-secret"));
             const [_pub_v] = await toArrayBuffer($id("verify-public"));
 
-            if(!_file || !_pub_e || !_sec || !_pub_v){
+            if(!_file || !_pub_e || !_sec){
                 dialogNotify("ファイルを選択してください");
                 return;
             }
@@ -463,11 +459,14 @@
             try{
                 const key = await cryptoDerive(_pub_e, _sec);
                 const decrypt = await cryptoDecrypt(key, _file.slice(132));
-                const verify = await cryptoVerify(_pub_v, _file.slice(0, 132), decrypt);
 
-                if(!verify){
-                    dialogNotify("署名が一致しません");
-                    return;
+                if(_pub_v){
+                    const verify = await cryptoVerify(_pub_v, _file.slice(0, 132), decrypt);
+
+                    if(!verify){
+                        dialogNotify("署名が一致しません");
+                        return;
+                    }
                 }
 
                 const inflate = await deflateDecode(decrypt);
@@ -534,9 +533,6 @@
         h1, h2, h3{
             margin: 16px;
         }
-        p{
-            margin: 10px 10px 10px 30px;
-        }
         input, button{
             cursor: pointer;
             box-sizing: border-box;
@@ -559,10 +555,12 @@
         }
         summary{
             cursor: pointer;
-            list-style-type: "\1F4D6\20";
         }
         ul, ol{
             margin: 0;
+        }
+        div.input{
+            margin: 10px 10px 10px 30px;
         }
         ul.input{
             list-style-type: "\1F4C2\20";
@@ -571,6 +569,9 @@
         }
         ul.input > li{
             margin-bottom: 10px;
+        }
+        summary.document{
+            list-style-type: "\1F4D6\20";
         }
     </style>
 </html>
